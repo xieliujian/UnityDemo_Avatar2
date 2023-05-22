@@ -29,4 +29,24 @@ public static class FunctionUtil
         }
         return l;
     }
+
+    // 递归查找
+    public static Transform FindChildRecursion(Transform t, string name)
+    {
+        foreach (Transform child in t)
+        {
+            if (child.name == name)
+            {
+                return child;
+            }
+            else
+            {
+                Transform ret = FindChildRecursion(child, name);
+                if (ret != null)
+                    return ret;
+            }
+        }
+
+        return null;
+    }
 }

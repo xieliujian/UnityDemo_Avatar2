@@ -166,8 +166,6 @@ public class Main : MonoBehaviour
 
     private Character mCharacter = null;
 
-    private bool mCombine = false;
-
     #endregion
 
     #region 内置函数
@@ -198,7 +196,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             ReduceAvatarRes();
-            mCharacter.Generate(mAvatarRes, mCombine);
+            mCharacter.Generate(mAvatarRes);
         }
 
         GUILayout.Box("Character", GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
@@ -206,7 +204,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             AddAvatarRes();
-            mCharacter.Generate(mAvatarRes, mCombine);
+            mCharacter.Generate(mAvatarRes);
         }
 
         GUILayout.EndHorizontal();
@@ -249,11 +247,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.ReduceIndex(parttype);
-
-            if (!mCombine)
-                mCharacter.ChangeEquipUnCombine(parttype, mAvatarRes);
-            else
-                mCharacter.Generate(mAvatarRes, mCombine);
+            mCharacter.ChangeEquipUnCombine(parttype, mAvatarRes);
         }
 
         GUILayout.Box(displayName, GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
@@ -261,11 +255,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.AddIndex(parttype);
-
-            if (!mCombine)
-                mCharacter.ChangeEquipUnCombine(parttype, mAvatarRes);
-            else
-                mCharacter.Generate(mAvatarRes, mCombine);
+            mCharacter.ChangeEquipUnCombine(parttype, mAvatarRes);
         }
 
         GUILayout.EndHorizontal();
@@ -282,7 +272,7 @@ public class Main : MonoBehaviour
         mCharacter.SetName("Character");
 
         mAvatarRes = mAvatarResList[mAvatarResIdx];
-        mCharacter.Generate(mAvatarRes, mCombine);
+        mCharacter.Generate(mAvatarRes);
     }
 
     private void CreateAllAvatarRes()
