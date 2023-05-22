@@ -15,7 +15,7 @@ public class GenerateResEditor : Editor
     private const string PREAFAB_SUFFIX = ".prefab";
     private const string INVALID_ANIM_NAME = "__preview__";
 
-    [MenuItem("Avatar/Generate")]
+    [MenuItem("Avatar2/Generate")]
     private static void Generate()
     {
         List<GameObject> objs = CollectObjs();
@@ -66,6 +66,7 @@ public class GenerateResEditor : Editor
             string dir = Path.GetDirectoryName(path);
             string filename = Path.GetFileNameWithoutExtension(path);
 
+            dir = dir.Replace("\\", "/");
             string[] splitdirs = dir.Split('/');
             string middir = splitdirs[splitdirs.Length - 1];
 
@@ -97,11 +98,13 @@ public class GenerateResEditor : Editor
         anim = obj.AddComponent<Animation>();
 
         List<AnimationClip> clips = FunctionUtil.CollectAll<AnimationClip>(animpath);
-        foreach(var clip in clips)
+        foreach (var clip in clips)
+        {
             anim.AddClip(clip, clip.name);
+        }
 
         string dstpath = prefabpath + obj.name.ToLower() + PREAFAB_SUFFIX;
-        PrefabUtility.CreatePrefab(dstpath, obj);
+        PrefabUtility.SaveAsPrefabAsset(obj, dstpath);
 
         GameObject.DestroyImmediate(obj);
     }
@@ -117,6 +120,7 @@ public class GenerateResEditor : Editor
             string dir = Path.GetDirectoryName(path);
             string filename = Path.GetFileNameWithoutExtension(path);
 
+            dir = dir.Replace("\\", "/");
             string[] splitdirs = dir.Split('/');
             string middir = splitdirs[splitdirs.Length - 1];
 
@@ -172,7 +176,7 @@ public class GenerateResEditor : Editor
                 newrenderer.material = material;
 
                 string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
-                PrefabUtility.CreatePrefab(dstpath, newobj);
+                PrefabUtility.SaveAsPrefabAsset(newobj, dstpath);
 
                 GameObject.DestroyImmediate(newobj);
             }
@@ -192,6 +196,7 @@ public class GenerateResEditor : Editor
             string dir = Path.GetDirectoryName(path);
             string filename = Path.GetFileNameWithoutExtension(path);
 
+            dir = dir.Replace("\\", "/");
             string[] splitdirs = dir.Split('/');
             string middir = splitdirs[splitdirs.Length - 1];
 
