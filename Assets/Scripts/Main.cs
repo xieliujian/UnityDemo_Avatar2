@@ -8,6 +8,7 @@ public class AvatarRes
 {
     public string mName;
     public GameObject mSkeleton;
+    public PartBoneNamesHolder mBoneHolder;
     public List<GameObject> mEyesList = new List<GameObject>();
     public List<GameObject> mFaceList = new List<GameObject>();
     public List<GameObject> mHairList = new List<GameObject>();
@@ -144,17 +145,18 @@ public class Main : MonoBehaviour
 {
     #region 常量
 
-    private const string SkeletonName = "skeleton";
-    private const string EyesName = "eyes";
-    private const string FaceName = "face";
-    private const string HairName = "hair";
-    private const string PantsName = "pants";
-    private const string ShoesName = "shoes";
-    private const string TopName = "top";
+    const string SkeletonName = "skeleton";
+    const string BoneAssetName = "bonenames";
+    const string EyesName = "eyes";
+    const string FaceName = "face";
+    const string HairName = "hair";
+    const string PantsName = "pants";
+    const string ShoesName = "shoes";
+    const string TopName = "top";
 
-    private const int typeWidth = 240;
-    private const int typeheight = 100;
-    private const int buttonWidth = 60;
+    const int typeWidth = 240;
+    const int typeheight = 100;
+    const int buttonWidth = 60;
 
     #endregion
 
@@ -175,6 +177,7 @@ public class Main : MonoBehaviour
     {
         CreateAllAvatarRes();
         InitCharacter();
+
     }
 	
 	// Update is called once per frame
@@ -285,11 +288,14 @@ public class Main : MonoBehaviour
 
             GameObject [] golist = Resources.LoadAll<GameObject>(dirname);
 
+            PartBoneNamesHolder[] boneHolder = Resources.LoadAll<PartBoneNamesHolder>(dirname);
+
             AvatarRes avatarres = new AvatarRes();
             mAvatarResList.Add(avatarres);
 
             avatarres.mName = dirname;
             avatarres.mSkeleton = FindRes(golist, SkeletonName)[0];
+            avatarres.mBoneHolder = boneHolder[0];
             avatarres.mEyesList = FindRes(golist, EyesName);
             avatarres.mFaceList = FindRes(golist, FaceName);
             avatarres.mHairList = FindRes(golist, HairName);
