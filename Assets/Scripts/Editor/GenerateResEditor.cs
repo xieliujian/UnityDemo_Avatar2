@@ -131,7 +131,6 @@ public class GenerateResEditor : Editor
     private static void GeneratePrefab(GameObject srcobj, string dir, string middir)
     {
         string prefabpath = Prefab_PATH + "/" + middir + "/";
-        string matpath = MAT_PATH + middir + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -143,37 +142,39 @@ public class GenerateResEditor : Editor
             Directory.CreateDirectory(prefabpath);
         }
 
-        List<Material> materials = FunctionUtil.CollectAll<Material>(matpath);
         foreach (SkinnedMeshRenderer smr in srcobj.GetComponentsInChildren<SkinnedMeshRenderer>(true))
         {
             GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(smr.gameObject);
             SkinnedMeshRenderer renderer = obj.GetComponent<SkinnedMeshRenderer>();
+
             GameObject rendererParent = obj.transform.parent.gameObject;
+            PrefabUtility.UnpackPrefabInstance(rendererParent, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             foreach (SkinnedMeshRenderer tempsmr in rendererParent.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 if (tempsmr != renderer)
+                {
                     GameObject.DestroyImmediate(tempsmr.gameObject);
+                }
             }
 
             Animation anim = rendererParent.GetComponent<Animation>();
             GameObject.DestroyImmediate(anim);
 
-            foreach (var material in materials)
+            var skinMesh = rendererParent.GetComponentInChildren<SkinnedMeshRenderer>();
+
+
+            GameObject newobj = GameObject.Instantiate(skinMesh.gameObject);
+            if (newobj != null)
             {
-                if (material == null)
-                    continue;
+                newobj.name = skinMesh.name;
 
-                if (!material.name.Contains(obj.name))
-                    continue;
-
-                GameObject newobj = GameObject.Instantiate(rendererParent);
-                newobj.name = material.name;
-                newobj.transform.position = Vector3.zero;
-                newobj.transform.rotation = Quaternion.identity;
-                newobj.transform.localScale = Vector3.one;
-
-                SkinnedMeshRenderer newrenderer = newobj.GetComponentInChildren<SkinnedMeshRenderer>();
-                newrenderer.material = material;
+                var newSkinMesh = newobj.GetComponent<SkinnedMeshRenderer>();
+                if (newSkinMesh != null)
+                {
+                    newSkinMesh.sharedMesh = null;
+                    newSkinMesh.rootBone = null;
+                    newSkinMesh.sharedMaterial = null;
+                }
 
                 string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
                 PrefabUtility.SaveAsPrefabAsset(newobj, dstpath);
