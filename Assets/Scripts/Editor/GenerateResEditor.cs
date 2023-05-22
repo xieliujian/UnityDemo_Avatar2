@@ -7,13 +7,15 @@ using System;
 
 public class GenerateResEditor : Editor
 {
-    private const string ANIM_PATH = "Assets/Anims/";
-    private const string MAT_PATH = "Assets/Materials/";
-    private const string Prefab_PATH = "Assets/Resources/";
-    private const string FBX_SUFFIX = ".fbx";
-    private const string ANIM_SUFFIX = ".anim";
-    private const string PREAFAB_SUFFIX = ".prefab";
-    private const string INVALID_ANIM_NAME = "__preview__";
+    const string ANIM_PATH = "Assets/Anims/";
+    const string MAT_PATH = "Assets/Materials/";
+    const string Prefab_PATH = "Assets/Resources/";
+    const string FBX_SUFFIX = ".fbx";
+    const string ANIM_SUFFIX = ".anim";
+    const string PREAFAB_SUFFIX = ".prefab";
+    const string INVALID_ANIM_NAME = "__preview__";
+    const string BONE_NAME_ASSET_NAME = "bonenames.asset";
+    const string ASSET_SUFFIX = ".asset";
 
     [MenuItem("Avatar2/Generate")]
     private static void Generate()
@@ -142,6 +144,8 @@ public class GenerateResEditor : Editor
             Directory.CreateDirectory(prefabpath);
         }
 
+        PartBoneNamesHolder partHolder = new PartBoneNamesHolder();
+
         foreach (SkinnedMeshRenderer smr in srcobj.GetComponentsInChildren<SkinnedMeshRenderer>(true))
         {
             GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(smr.gameObject);
@@ -161,29 +165,35 @@ public class GenerateResEditor : Editor
             GameObject.DestroyImmediate(anim);
 
             var skinMesh = rendererParent.GetComponentInChildren<SkinnedMeshRenderer>();
-
-
-            GameObject newobj = GameObject.Instantiate(skinMesh.gameObject);
-            if (newobj != null)
+            if (skinMesh != null)
             {
-                newobj.name = skinMesh.name;
+                partHolder.Add(skinMesh.name, skinMesh);
 
-                var newSkinMesh = newobj.GetComponent<SkinnedMeshRenderer>();
-                if (newSkinMesh != null)
+                GameObject newobj = GameObject.Instantiate(skinMesh.gameObject);
+                if (newobj != null)
                 {
-                    newSkinMesh.sharedMesh = null;
-                    newSkinMesh.rootBone = null;
-                    newSkinMesh.sharedMaterial = null;
+                    newobj.name = skinMesh.name;
+
+                    var newSkinMesh = newobj.GetComponent<SkinnedMeshRenderer>();
+                    if (newSkinMesh != null)
+                    {
+                        newSkinMesh.sharedMesh = null;
+                        newSkinMesh.rootBone = null;
+                        newSkinMesh.sharedMaterial = null;
+                    }
+
+                    string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
+                    PrefabUtility.SaveAsPrefabAsset(newobj, dstpath);
+
+                    GameObject.DestroyImmediate(newobj);
                 }
-
-                string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
-                PrefabUtility.SaveAsPrefabAsset(newobj, dstpath);
-
-                GameObject.DestroyImmediate(newobj);
             }
 
             GameObject.DestroyImmediate(rendererParent);
         }
+
+        var assetPath = prefabpath + BONE_NAME_ASSET_NAME;
+        AssetDatabase.CreateAsset(partHolder, assetPath);
     }
 
     private static void GenerateAllAnim(List<GameObject> objs)
