@@ -52,37 +52,37 @@ public class AvatarRes
 
     public void AddIndex(int type)
     {
-        if (type == (int)EPart.EP_Eyes)
+        if (type == (int)Character.PartType.Eyes)
         {
             mEyesIdx++;
             if (mEyesIdx >= mEyesList.Count)
                 mEyesIdx = 0;
         }
-        else if (type == (int)EPart.EP_Face)
+        else if (type == (int)Character.PartType.Face)
         {
             mFaceIdx++;
             if (mFaceIdx >= mFaceList.Count)
                 mFaceIdx = 0;
         }
-        else if (type == (int)EPart.EP_Hair)
+        else if (type == (int)Character.PartType.Hair)
         {
             mHairIdx++;
             if (mHairIdx >= mHairList.Count)
                 mHairIdx = 0;
         }
-        else if (type == (int)EPart.EP_Pants)
+        else if (type == (int)Character.PartType.Pants)
         {
             mPantsIdx++;
             if (mPantsIdx >= mPantsList.Count)
                 mPantsIdx = 0;
         }
-        else if (type == (int)EPart.EP_Shoes)
+        else if (type == (int)Character.PartType.Shoes)
         {
             mShoesIdx++;
             if (mShoesIdx >= mShoesList.Count)
                 mShoesIdx = 0;
         }
-        else if (type == (int)EPart.EP_Top)
+        else if (type == (int)Character.PartType.Top)
         {
             mTopIdx++;
             if (mTopIdx >= mTopList.Count)
@@ -92,53 +92,43 @@ public class AvatarRes
 
     public void ReduceIndex(int type)
     {
-        if (type == (int)EPart.EP_Eyes)
+        if (type == (int)Character.PartType.Eyes)
         {
             mEyesIdx--;
             if (mEyesIdx < 0)
                 mEyesIdx = mEyesList.Count - 1;
         }
-        else if (type == (int)EPart.EP_Face)
+        else if (type == (int)Character.PartType.Face)
         {
             mFaceIdx--;
             if (mFaceIdx < 0)
                 mFaceIdx = mFaceList.Count - 1;
         }
-        else if (type == (int)EPart.EP_Hair)
+        else if (type == (int)Character.PartType.Hair)
         {
             mHairIdx--;
             if (mHairIdx < 0)
                 mHairIdx = mHairList.Count - 1;
         }
-        else if (type == (int)EPart.EP_Pants)
+        else if (type == (int)Character.PartType.Pants)
         {
             mPantsIdx--;
             if (mPantsIdx < 0)
                 mPantsIdx = mPantsList.Count - 1;
         }
-        else if (type == (int)EPart.EP_Shoes)
+        else if (type == (int)Character.PartType.Shoes)
         {
             mShoesIdx--;
             if (mShoesIdx < 0)
                 mShoesIdx = mShoesList.Count - 1;
         }
-        else if (type == (int)EPart.EP_Top)
+        else if (type == (int)Character.PartType.Top)
         {
             mTopIdx--;
             if (mTopIdx < 0)
                 mTopIdx = mTopList.Count - 1;
         }
     }
-}
-
-public enum EPart
-{
-    EP_Eyes,
-    EP_Face,
-    EP_Hair,
-    EP_Pants,
-    EP_Shoes,
-    EP_Top,
 }
 
 public class Main : MonoBehaviour
@@ -166,7 +156,7 @@ public class Main : MonoBehaviour
     private AvatarRes mAvatarRes = null;
     private int mAvatarResIdx = 0;
 
-    private Character mCharacter = null;
+    private Character mCharacter = new Character();
 
     #endregion
 
@@ -213,12 +203,12 @@ public class Main : MonoBehaviour
         GUILayout.EndHorizontal();
 
         // Buttons for changing character elements.
-        AddCategory((int)EPart.EP_Face, "Head", null);
-        AddCategory((int)EPart.EP_Eyes, "Eyes", null);
-        AddCategory((int)EPart.EP_Hair, "Hair", null);
-        AddCategory((int)EPart.EP_Top, "Body", "item_shirt");
-        AddCategory((int)EPart.EP_Pants, "Legs", "item_pants");
-        AddCategory((int)EPart.EP_Shoes, "Feet", "item_boots");
+        AddCategory((int)Character.PartType.Face, "Head", null);
+        AddCategory((int)Character.PartType.Eyes, "Eyes", null);
+        AddCategory((int)Character.PartType.Hair, "Hair", null);
+        AddCategory((int)Character.PartType.Top, "Body", "item_shirt");
+        AddCategory((int)Character.PartType.Pants, "Legs", "item_pants");
+        AddCategory((int)Character.PartType.Shoes, "Feet", "item_boots");
 
         // anim
         GUILayout.BeginHorizontal();
@@ -250,7 +240,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.ReduceIndex(parttype);
-            mCharacter.ChangeEquipUnCombine(parttype, mAvatarRes);
+            mCharacter.ChangeEquip(parttype, mAvatarRes);
         }
 
         GUILayout.Box(displayName, GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
@@ -258,7 +248,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.AddIndex(parttype);
-            mCharacter.ChangeEquipUnCombine(parttype, mAvatarRes);
+            mCharacter.ChangeEquip(parttype, mAvatarRes);
         }
 
         GUILayout.EndHorizontal();
@@ -270,10 +260,6 @@ public class Main : MonoBehaviour
 
     private void InitCharacter()
     {
-        GameObject go = new GameObject();
-        mCharacter = go.AddComponent<Character>();
-        mCharacter.SetName("Character");
-
         mAvatarRes = mAvatarResList[mAvatarResIdx];
         mCharacter.Generate(mAvatarRes);
     }

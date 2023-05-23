@@ -146,6 +146,8 @@ public class GenerateResEditor : Editor
 
         PartBoneNamesHolder partHolder = new PartBoneNamesHolder();
 
+        List<string> partNameList = new List<string>(); 
+
         foreach (SkinnedMeshRenderer smr in srcobj.GetComponentsInChildren<SkinnedMeshRenderer>(true))
         {
             GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(smr.gameObject);
@@ -167,25 +169,35 @@ public class GenerateResEditor : Editor
             var skinMesh = rendererParent.GetComponentInChildren<SkinnedMeshRenderer>();
             if (skinMesh != null)
             {
-                partHolder.Add(skinMesh.name, skinMesh);
+                var skinMeshName = skinMesh.name;
 
-                GameObject newobj = GameObject.Instantiate(skinMesh.gameObject);
-                if (newobj != null)
+                partHolder.Add(skinMeshName, skinMesh);
+
+                var isPrefabExist = IsPartPrefabExist(partNameList, skinMeshName, out string partName);
+                if (isPrefabExist)
                 {
-                    newobj.name = skinMesh.name;
-
-                    var newSkinMesh = newobj.GetComponent<SkinnedMeshRenderer>();
-                    if (newSkinMesh != null)
+                    GameObject newobj = GameObject.Instantiate(skinMesh.gameObject);
+                    if (newobj != null)
                     {
-                        newSkinMesh.sharedMesh = null;
-                        newSkinMesh.rootBone = null;
-                        newSkinMesh.sharedMaterial = null;
+                        newobj.name = partName;
+
+                        var newSkinMesh = newobj.GetComponent<SkinnedMeshRenderer>();
+                        if (newSkinMesh != null)
+                        {
+                            newSkinMesh.sharedMesh = null;
+                            newSkinMesh.rootBone = null;
+
+                            for (int i = 0; i < skinMesh.sharedMaterials.Length; i++)
+                            {
+                                newSkinMesh.sharedMaterials[i] = null;
+                            }
+                        }
+
+                        string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
+                        PrefabUtility.SaveAsPrefabAsset(newobj, dstpath);
+
+                        GameObject.DestroyImmediate(newobj);
                     }
-
-                    string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
-                    PrefabUtility.SaveAsPrefabAsset(newobj, dstpath);
-
-                    GameObject.DestroyImmediate(newobj);
                 }
             }
 
@@ -194,6 +206,31 @@ public class GenerateResEditor : Editor
 
         var assetPath = prefabpath + BONE_NAME_ASSET_NAME;
         AssetDatabase.CreateAsset(partHolder, assetPath);
+    }
+
+    /// <summary>
+    /// 是否部件名字存在
+    /// </summary>
+    /// <param name="partName"></param>
+    /// <returns></returns>
+    static bool IsPartPrefabExist(List<string> partNameList, string skinMeshName, out string partName)
+    {
+        partName = "";
+
+        foreach(var name in Character.PART_NAMES)
+        {
+            if (skinMeshName.StartsWith(name))
+            {
+                if (!partNameList.Contains(name))
+                {
+                    partName = name;
+                    partNameList.Add(name);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static void GenerateAllAnim(List<GameObject> objs)

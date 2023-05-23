@@ -9,7 +9,11 @@ public static class FunctionUtil
 {
     public static void Reset(this GameObject go, GameObject parent)
     {
-        go.transform.parent = parent.transform;
+        if (parent != null)
+        {
+            go.transform.parent = parent.transform;
+        }
+
         go.transform.position = Vector3.zero;
         go.transform.rotation = Quaternion.identity;
         go.transform.localScale = Vector3.one;

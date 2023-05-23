@@ -2,109 +2,114 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Character : MonoBehaviour
+public class Character
 {
-    #region 变量
-
-    private GameObject mSkeleton;
-    private GameObject mEyes;
-    private GameObject mFace;
-    private GameObject mHair;
-    private GameObject mPants;
-    private GameObject mShoes;
-    private GameObject mTop;
-    private Animation mAnim;
-
-    #endregion
-
-    #region 内置函数
-
-    // Use this for initialization
-    void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
-
-    #endregion
-
-    #region 函数
-
-    public void SetName(string name)
+    public enum PartType
     {
-        gameObject.name = name;
+        Eyes,
+        Face,
+        Hair,
+        Pants,
+        Shoes,
+        Top,
     }
+
+    /// <summary>
+    /// 部件名定义
+    /// </summary>
+    public static string[] PART_NAMES =
+    {
+        "eyes",
+        "face",
+        "hair",
+        "pants",
+        "shoes",
+        "top",
+    };
+
+    GameObject m_Skeleton;
+    GameObject m_Eyes;
+    GameObject m_Face;
+    GameObject m_Hair;
+    GameObject m_Pants;
+    GameObject m_Shoes;
+    GameObject m_Top;
+    Animation m_Anim;
 
     public void Generate(AvatarRes avatarres)
     {
-        GenerateUnCombine(avatarres);
-    }
-
-    private void DestroyAll()
-    {
-        if (mSkeleton != null)
-            GameObject.DestroyImmediate(mSkeleton);
-
-        mEyes = null;
-        mFace = null;
-        mHair = null;
-        mPants = null;
-        mShoes = null;
-        mTop = null;
-    }
-
-    private void GenerateUnCombine(AvatarRes avatarres)
-    {
         DestroyAll();
 
-        mSkeleton = GameObject.Instantiate(avatarres.mSkeleton);
-        mSkeleton.Reset(gameObject);
-        mSkeleton.name = avatarres.mSkeleton.name;
+        m_Skeleton = GameObject.Instantiate(avatarres.mSkeleton);
+        m_Skeleton.Reset(null);
+        m_Skeleton.name = avatarres.mSkeleton.name;
 
-        mAnim = mSkeleton.GetComponent<Animation>();
+        m_Anim = m_Skeleton.GetComponent<Animation>();
 
-        ChangeEquipUnCombine((int)EPart.EP_Eyes, avatarres);
-        ChangeEquipUnCombine((int)EPart.EP_Face, avatarres);
-        ChangeEquipUnCombine((int)EPart.EP_Hair, avatarres);
-        ChangeEquipUnCombine((int)EPart.EP_Pants, avatarres);
-        ChangeEquipUnCombine((int)EPart.EP_Shoes, avatarres);
-        ChangeEquipUnCombine((int)EPart.EP_Top, avatarres);
+        ChangeEquip((int)PartType.Eyes, avatarres);
+        ChangeEquip((int)PartType.Face, avatarres);
+        ChangeEquip((int)PartType.Hair, avatarres);
+        ChangeEquip((int)PartType.Pants, avatarres);
+        ChangeEquip((int)PartType.Shoes, avatarres);
+        ChangeEquip((int)PartType.Top, avatarres);
 
         ChangeAnim(avatarres);
     }
 
-    public void ChangeEquipUnCombine(int type, AvatarRes avatarres)
+    public void ChangeEquip(int type, AvatarRes avatarres)
     {
-        if (type == (int)EPart.EP_Eyes)
+        if (type == (int)PartType.Eyes)
         {
-            ChangeEquipUnCombine(ref mEyes, avatarres.mEyesList[avatarres.mEyesIdx]);
+            ChangeEquip(ref m_Eyes, avatarres.mEyesList[avatarres.mEyesIdx]);
         }
-        else if (type == (int)EPart.EP_Face)
+        else if (type == (int)PartType.Face)
         {
-            ChangeEquipUnCombine(ref mFace, avatarres.mFaceList[avatarres.mFaceIdx]);
+            ChangeEquip(ref m_Face, avatarres.mFaceList[avatarres.mFaceIdx]);
         }
-        else if (type == (int)EPart.EP_Hair)
+        else if (type == (int)PartType.Hair)
         {
-            ChangeEquipUnCombine(ref mHair, avatarres.mHairList[avatarres.mHairIdx]);
+            ChangeEquip(ref m_Hair, avatarres.mHairList[avatarres.mHairIdx]);
         }
-        else if (type == (int)EPart.EP_Pants)
+        else if (type == (int)PartType.Pants)
         {
-            ChangeEquipUnCombine(ref mPants, avatarres.mPantsList[avatarres.mPantsIdx]);
+            ChangeEquip(ref m_Pants, avatarres.mPantsList[avatarres.mPantsIdx]);
         }
-        else if (type == (int)EPart.EP_Shoes)
+        else if (type == (int)PartType.Shoes)
         {
-            ChangeEquipUnCombine(ref mShoes, avatarres.mShoesList[avatarres.mShoesIdx]);
+            ChangeEquip(ref m_Shoes, avatarres.mShoesList[avatarres.mShoesIdx]);
         }
-        else if (type == (int)EPart.EP_Top)
+        else if (type == (int)PartType.Top)
         {
-            ChangeEquipUnCombine(ref mTop, avatarres.mTopList[avatarres.mTopIdx]);
+            ChangeEquip(ref m_Top, avatarres.mTopList[avatarres.mTopIdx]);
         }
     }
 
-    private void ChangeEquipUnCombine(ref GameObject go, GameObject resgo)
+    public void ChangeAnim(AvatarRes avatarres)
+    {
+        if (m_Anim == null)
+            return;
+
+        AnimationClip animclip = avatarres.mAnimList[avatarres.mAnimIdx];
+        m_Anim.wrapMode = WrapMode.Loop;
+        m_Anim.Play(animclip.name);
+    }
+
+    void DestroyAll()
+    {
+        if (m_Skeleton != null)
+        {
+            GameObject.DestroyImmediate(m_Skeleton);
+        }
+
+        m_Eyes = null;
+        m_Face = null;
+        m_Hair = null;
+        m_Pants = null;
+        m_Shoes = null;
+        m_Top = null;
+    }
+
+    void ChangeEquip(ref GameObject go, GameObject resgo)
     {
         if (go != null)
         {
@@ -112,15 +117,19 @@ public class Character : MonoBehaviour
         }
 
         go = GameObject.Instantiate(resgo);
-        go.Reset(mSkeleton);
+        go.Reset(m_Skeleton);
         go.name = resgo.name;
 
         SkinnedMeshRenderer render = go.GetComponentInChildren<SkinnedMeshRenderer>();
-        ShareSkeletonInstanceWith(render, mSkeleton);
+        ShareSkeletonInstanceWith(render, m_Skeleton);
     }
 
-    // 共享骨骼
-    public void ShareSkeletonInstanceWith(SkinnedMeshRenderer selfSkin, GameObject target)
+    /// <summary>
+    /// 共享骨骼
+    /// </summary>
+    /// <param name="selfSkin"></param>
+    /// <param name="target"></param>
+    void ShareSkeletonInstanceWith(SkinnedMeshRenderer selfSkin, GameObject target)
     {
         Transform[] newBones = new Transform[selfSkin.bones.Length];
         for (int i = 0; i < selfSkin.bones.GetLength(0); ++i)
@@ -135,16 +144,4 @@ public class Character : MonoBehaviour
 
         selfSkin.bones = newBones;
     }
-
-    public void ChangeAnim(AvatarRes avatarres)
-    {
-        if (mAnim == null)
-            return;
-
-        AnimationClip animclip = avatarres.mAnimList[avatarres.mAnimIdx];
-        mAnim.wrapMode = WrapMode.Loop;
-        mAnim.Play(animclip.name);
-    }
-
-    #endregion
 }

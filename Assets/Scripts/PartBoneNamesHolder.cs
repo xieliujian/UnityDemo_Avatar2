@@ -11,6 +11,11 @@ public class PartBoneNamesHolder : ScriptableObject
         public string partName;
         public string rootBoneName;
         public string[] boneNames;
+
+        public Bounds bounds;
+        public Vector3 localPos;
+        public Quaternion localRot;
+        public Vector3 localScale;
     }
 
     [SerializeField]
@@ -34,6 +39,12 @@ public class PartBoneNamesHolder : ScriptableObject
         }
 
         info.boneNames = boneNameList.ToArray();
+
+        info.bounds = smr.bounds;
+        info.localPos = smr.gameObject.transform.localPosition;
+        info.localRot = smr.gameObject.transform.localRotation;
+        info.localScale = smr.gameObject.transform.localScale;
+
         m_Infos.Add(info);
     }
     
