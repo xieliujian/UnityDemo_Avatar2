@@ -7,10 +7,6 @@ using System;
 
 public class GenerateResEditor : Editor
 {
-    const string ANIM_PATH = "Assets/Anims/";
-    const string MESH_PATH = "Assets/Meshs/";
-    const string MAT_PATH = "Assets/Materials/";
-    const string Prefab_PATH = "Assets/Resources/";
     const string FBX_SUFFIX = ".fbx";
     const string ANIM_SUFFIX = ".anim";
     const string MESH_SUFFIX = ".mesh";
@@ -29,11 +25,11 @@ public class GenerateResEditor : Editor
             return;
         }
 
-        if (Directory.Exists(ANIM_PATH))
-            Directory.Delete(ANIM_PATH, true);
+        if (Directory.Exists(AvatarRes.ANIM_PATH))
+            Directory.Delete(AvatarRes.ANIM_PATH, true);
 
-        if (Directory.Exists(Prefab_PATH))
-            Directory.Delete(Prefab_PATH, true);
+        if (Directory.Exists(AvatarRes.Prefab_PATH))
+            Directory.Delete(AvatarRes.Prefab_PATH, true);
 
         GenerateAllAnim(objs);
         GenerateAllMesh(objs);
@@ -80,8 +76,8 @@ public class GenerateResEditor : Editor
 
     private static void GenerateSkeleton(GameObject srcobj, string dir, string middir)
     {
-        string prefabpath = Prefab_PATH + "/" + middir + "/";
-        string animpath = ANIM_PATH + "/" + middir + "/";
+        string prefabpath = AvatarRes.Prefab_PATH + "/" + middir + "/";
+        string animpath = AvatarRes.ANIM_PATH + "/" + middir + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -134,7 +130,7 @@ public class GenerateResEditor : Editor
 
     private static void GeneratePrefab(GameObject srcobj, string dir, string middir)
     {
-        string prefabpath = Prefab_PATH + "/" + middir + "/";
+        string prefabpath = AvatarRes.Prefab_PATH + "/" + middir + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -275,7 +271,7 @@ public class GenerateResEditor : Editor
 
     static void GenerateMesh(string dir, string middir, string fbxname)
     {
-        string meshPath = MESH_PATH + "/" + middir + "/";
+        string meshPath = AvatarRes.MESH_PATH + "/" + middir + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -329,7 +325,7 @@ public class GenerateResEditor : Editor
     /// <param name="fbxname"></param>
     static void GenerateAnim(string dir, string middir, string fbxname)
     {
-        string clippath = ANIM_PATH + "/" + middir + "/";
+        string clippath = AvatarRes.ANIM_PATH + "/" + middir + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -428,6 +424,60 @@ public class GenerateResEditor : Editor
     }
 
     static Mesh CopyMeshData(Mesh mesh)
+    {
+        int vertexCount = mesh.vertexCount;
+        int subMeshCount = mesh.subMeshCount;
+        var subMeshTriangles = new int[subMeshCount][];
+        for (int i = 0; i < subMeshCount; i++)
+        {
+            subMeshTriangles[i] = mesh.GetTriangles(i);
+        }
+
+        // old data
+        Vector3[] vertices = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        Vector4[] tangents = mesh.tangents;
+
+        Vector2[] uv = mesh.uv;
+        Vector2[] uv2 = mesh.uv2;
+        Vector2[] uv3 = mesh.uv3;
+        Vector2[] uv4 = mesh.uv4;
+        Vector2[] uv5 = mesh.uv5;
+        Vector2[] uv6 = mesh.uv6;
+        Vector2[] uv7 = mesh.uv7;
+        Vector2[] uv8 = mesh.uv8;
+
+        Color[] colors = mesh.colors;
+        BoneWeight[] boneWeights = mesh.boneWeights;
+        Matrix4x4[] bindposes = mesh.bindposes;   
+
+        Mesh newMesh = new Mesh();
+        newMesh.vertices = vertices;
+        newMesh.normals = normals;
+        newMesh.tangents = tangents;
+        newMesh.uv = uv;
+        newMesh.uv2 = uv2;
+        newMesh.uv3 = uv3;
+        newMesh.uv4 = uv4;
+        newMesh.uv5 = uv5;
+        newMesh.uv6 = uv6;
+        newMesh.uv7 = uv7;
+        newMesh.uv8 = uv8;
+        newMesh.colors = colors;
+        newMesh.boneWeights = boneWeights;
+        newMesh.bindposes = bindposes;
+
+        newMesh.subMeshCount = subMeshTriangles.Length;
+
+        for (int i = 0; i < subMeshTriangles.Length; ++i)
+        {
+            newMesh.SetTriangles(subMeshTriangles[i], i);
+        }
+
+        return newMesh;
+    }
+
+    static Mesh CopyMeshDataOptimize(Mesh mesh)
     {
         int vertexCount = mesh.vertexCount;
         int subMeshCount = mesh.subMeshCount;

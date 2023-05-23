@@ -6,11 +6,96 @@ using System.IO;
 
 public class AvatarResPart
 {
+    public string partName;
+
     public GameObject prefab;
+
+    public List<Mesh> meshList = new List<Mesh>();
+
+    public List<Material> matList = new List<Material>();
+
+    public int meshIdx;
+
+    public int matIdx;
+
+    public void FillMesh(List<Mesh> meshArray)
+    {
+        if (meshArray == null)
+            return;
+
+        foreach(var mesh in meshArray)
+        {
+            if (mesh == null)
+                continue;
+
+            if (mesh.name.Contains(partName))
+            {
+                meshList.Add(mesh);
+            }
+        }
+    }
+
+    public void FillMat(List<Material> matArray)
+    {
+        if (matArray == null)
+            return;
+
+        foreach(var mat in matArray)
+        {
+            if (mat == null)
+                continue;
+
+            if (mat.name.Contains(partName))
+            {
+                matList.Add(mat);
+            }
+        }
+    }
+
+    public Material FindMat()
+    {
+        return matList[matIdx];
+    }
+
+    public Mesh FindMesh()
+    {
+        return meshList[meshIdx];
+    }
+
+    public void ResetIndex()
+    {
+        meshIdx = 0;
+        matIdx = 0;
+    }
+
+    public void AddIndex()
+    {
+        meshIdx++;
+
+        if (meshIdx >= meshList.Count)
+        {
+            meshIdx = 0;
+        }
+    }
+
+    public void ReduceIndex()
+    {
+        meshIdx--;
+
+        if (meshIdx < 0)
+        {
+            meshIdx = meshList.Count - 1;
+        }
+    }
 }
 
 public class AvatarRes
 {
+    public const string MESH_PATH = "Assets/Meshs/";
+    public const string ANIM_PATH = "Assets/Anims/";
+    public const string Prefab_PATH = "Assets/Resources/";
+    public const string MAT_PATH = "Assets/Materials/";
+
     public string mName;
     public PartBoneNamesHolder mBoneHolder;
     public List<AnimationClip> mAnimList = new List<AnimationClip>();
@@ -34,26 +119,28 @@ public class AvatarRes
 
     public void AddIndex(int type)
     {
-
+        var part = partList[type];
+        if (part != null)
+        {
+            part.AddIndex();
+        }
     }
 
     public void ReduceIndex(int type)
     {
-
+        var part = partList[type];
+        if (part != null)
+        {
+            part.ReduceIndex();
+        }
     }
 }
 
 public class Main : MonoBehaviour
 {
-    #region 常量
-
     const int typeWidth = 240;
     const int typeheight = 100;
     const int buttonWidth = 60;
-
-    #endregion
-
-    #region 变量
 
     private List<AvatarRes> mAvatarResList = new List<AvatarRes>(); 
     private AvatarRes mAvatarRes = null;
@@ -61,16 +148,11 @@ public class Main : MonoBehaviour
 
     private Character mCharacter = new Character();
 
-    #endregion
-
-    #region 内置函数
-
     // Use this for initialization
     void Start ()
     {
         CreateAllAvatarRes();
         InitCharacter();
-
     }
 	
 	// Update is called once per frame
@@ -79,7 +161,7 @@ public class Main : MonoBehaviour
 		
 	}
 
-    private void OnGUI()
+    void OnGUI()
     {
         GUI.skin.box.fontSize = 50;
         GUI.skin.button.fontSize = 50;
@@ -92,7 +174,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             ReduceAvatarRes();
-            mCharacter.Generate(mAvatarRes);
+            Generate(mAvatarRes);
         }
 
         GUILayout.Box("Character", GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
@@ -100,7 +182,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             AddAvatarRes();
-            mCharacter.Generate(mAvatarRes);
+            Generate(mAvatarRes);
         }
 
         GUILayout.EndHorizontal();
@@ -119,7 +201,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.ReduceAnimIdx();
-            mCharacter.ChangeAnim(mAvatarRes);
+            ChangeAnim(mAvatarRes);
         }
 
         GUILayout.Box("Anim", GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
@@ -127,7 +209,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.AddAnimIdx();
-            mCharacter.ChangeAnim(mAvatarRes);
+            ChangeAnim(mAvatarRes);
         }
 
         GUILayout.EndHorizontal();
@@ -143,7 +225,7 @@ public class Main : MonoBehaviour
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.ReduceIndex(parttype);
-            mCharacter.ChangeEquip(parttype, mAvatarRes);
+            ChangeEquip(parttype, mAvatarRes);
         }
 
         GUILayout.Box(displayName, GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
@@ -151,25 +233,44 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
             mAvatarRes.AddIndex(parttype);
-            mCharacter.ChangeEquip(parttype, mAvatarRes);
+            ChangeEquip(parttype, mAvatarRes);
         }
 
         GUILayout.EndHorizontal();
     }
 
-    #endregion
-
-    #region 函数
-
-    private void InitCharacter()
+    void InitCharacter()
     {
         mAvatarRes = mAvatarResList[mAvatarResIdx];
-        mCharacter.Generate(mAvatarRes);
+        Generate(mAvatarRes);
     }
 
-    private void CreateAllAvatarRes()
+    void Generate(AvatarRes res)
     {
-        DirectoryInfo dir = new DirectoryInfo("Assets/Resources/");
+        if (res == null)
+            return;
+
+        mCharacter.charName = res.mName;
+        mCharacter.InitSkeleton(res.mSkeleton);
+        mCharacter.InitPartAsset(res.mBoneHolder);
+
+        for (int i = 0; i < (int)CharacterPartType.TotalNum; i++)
+        {
+            var part = res.partList[i];
+            if (part == null)
+                continue;
+
+            mCharacter.InitPart(i, part.prefab);
+
+            var mesh = part.FindMesh();
+            var mat = part.FindMat();
+            mCharacter.ChangePart(i, mesh, mat);
+        }
+    }
+
+    void CreateAllAvatarRes()
+    {
+        DirectoryInfo dir = new DirectoryInfo(AvatarRes.Prefab_PATH);
         foreach(var subdir in dir.GetDirectories())
         {
             string[] splits = subdir.Name.Split('/');
@@ -186,6 +287,12 @@ public class Main : MonoBehaviour
             avatarres.mSkeleton = FindRes(golist, Character.SKELETON_NAME)[0];
             avatarres.mBoneHolder = boneHolder[0];
 
+            string meshPath = AvatarRes.MESH_PATH + dirname + "/";
+            List<Mesh> meshArray = FunctionUtil.CollectAll<Mesh>(meshPath);
+
+            string matPath = AvatarRes.MAT_PATH + dirname + "/";
+            List<Material> matArray = FunctionUtil.CollectAll<Material>(matPath);
+
             avatarres.partList.Clear();
             for (int i = 0; i < (int)CharacterPartType.TotalNum; i++)
             {
@@ -193,24 +300,30 @@ public class Main : MonoBehaviour
                 var partPrefab = FindRes(golist, partName)[0];
 
                 AvatarResPart part = new AvatarResPart();
+                part.partName = Character.PART_NAMES[i];
                 part.prefab = partPrefab;
+                part.FillMesh(meshArray);
+                part.FillMat(matArray);
                 avatarres.partList.Add(part);
             }
 
-            //avatarres.mEyes = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Eyes])[0];
-            //avatarres.mFace = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Face])[0];
-            //avatarres.mHair = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Hair])[0];
-            //avatarres.mPants = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Pants])[0];
-            //avatarres.mShoes = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Shoes])[0];
-            //avatarres.mTop = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Top])[0];
-
-            string animpath = "Assets/Anims/" + dirname + "/";
+            string animpath = AvatarRes.ANIM_PATH + dirname + "/";
             List<AnimationClip> clips = FunctionUtil.CollectAll<AnimationClip>(animpath);
             avatarres.mAnimList.AddRange(clips);
         }
     }
 
-    private List<GameObject> FindRes(GameObject []golist, string findname)
+    void ChangeEquip(int parttype, AvatarRes res)
+    {
+
+    }
+
+    void ChangeAnim(AvatarRes res)
+    {
+
+    }
+
+    List<GameObject> FindRes(GameObject []golist, string findname)
     {
         List<GameObject> findlist = new List<GameObject>();
         foreach (var go in golist)
@@ -224,7 +337,7 @@ public class Main : MonoBehaviour
         return findlist;
     }
 
-    private void AddAvatarRes()
+    void AddAvatarRes()
     {
         mAvatarResIdx++;
         if (mAvatarResIdx >= mAvatarResList.Count)
@@ -233,7 +346,7 @@ public class Main : MonoBehaviour
         mAvatarRes = mAvatarResList[mAvatarResIdx];
     }
 
-    private void ReduceAvatarRes()
+    void ReduceAvatarRes()
     {
         mAvatarResIdx--;
         if (mAvatarResIdx < 0)
@@ -241,6 +354,4 @@ public class Main : MonoBehaviour
 
         mAvatarRes = mAvatarResList[mAvatarResIdx];
     }
-
-    #endregion
 }

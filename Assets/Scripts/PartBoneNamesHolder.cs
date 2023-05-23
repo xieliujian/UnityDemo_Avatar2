@@ -6,7 +6,7 @@ using UnityEngine;
 public class PartBoneNamesHolder : ScriptableObject
 {
     [Serializable]
-    public struct TransInfo
+    public class TransInfo
     {
         public Vector3 localPos;
         public Quaternion localRot;
@@ -52,6 +52,32 @@ public class PartBoneNamesHolder : ScriptableObject
         info.trans.localScale = smr.gameObject.transform.localScale;
 
         m_Infos.Add(info);
+    }
+
+    public TransInfo GetTransInfo(string partName)
+    {
+        for (int i = 0; i < m_Infos.Count; ++i)
+        {
+            if (m_Infos[i].partName == partName)
+            {
+                return m_Infos[i].trans;
+            }
+        }
+
+        return null;
+    }
+
+    public Bounds GetBounds(string partName)
+    {
+        for (int i = 0; i < m_Infos.Count; ++i)
+        {
+            if (m_Infos[i].partName == partName)
+            {
+                return m_Infos[i].bounds;
+            }
+        }
+
+        return new Bounds();
     }
     
     public string[] GetBoneNames(string partName)
