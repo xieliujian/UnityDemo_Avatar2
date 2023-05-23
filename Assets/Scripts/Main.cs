@@ -4,145 +4,48 @@ using UnityEngine;
 using System;
 using System.IO;
 
+public class AvatarResPart
+{
+    public GameObject prefab;
+}
+
 public class AvatarRes
 {
     public string mName;
-    public GameObject mSkeleton;
     public PartBoneNamesHolder mBoneHolder;
-    public List<GameObject> mEyesList = new List<GameObject>();
-    public List<GameObject> mFaceList = new List<GameObject>();
-    public List<GameObject> mHairList = new List<GameObject>();
-    public List<GameObject> mPantsList = new List<GameObject>();
-    public List<GameObject> mShoesList = new List<GameObject>();
-    public List<GameObject> mTopList = new List<GameObject>();
     public List<AnimationClip> mAnimList = new List<AnimationClip>();
+    public GameObject mSkeleton;
+    public List<AvatarResPart> partList = new List<AvatarResPart>();
 
-    public int mEyesIdx = 0;
-    public int mFaceIdx = 0;
-    public int mHairIdx = 0;
-    public int mPantsIdx = 0;
-    public int mShoesIdx = 0;
-    public int mTopIdx = 0;
-    public int mAnimIdx = 0;
-    
     public void Reset()
     {
-        mEyesIdx = 0;
-        mFaceIdx = 0;
-        mHairIdx = 0;
-        mPantsIdx = 0;
-        mShoesIdx = 0;
-        mTopIdx = 0;
-        mAnimIdx = 0;
+
     }
 
     public void AddAnimIdx()
     {
-        mAnimIdx++;
-        if (mAnimIdx >= mAnimList.Count)
-            mAnimIdx = 0;
+
     }
 
     public void ReduceAnimIdx()
     {
-        mAnimIdx--;
-        if (mAnimIdx < 0)
-            mAnimIdx = mAnimList.Count - 1;
+
     }
 
     public void AddIndex(int type)
     {
-        if (type == (int)Character.PartType.Eyes)
-        {
-            mEyesIdx++;
-            if (mEyesIdx >= mEyesList.Count)
-                mEyesIdx = 0;
-        }
-        else if (type == (int)Character.PartType.Face)
-        {
-            mFaceIdx++;
-            if (mFaceIdx >= mFaceList.Count)
-                mFaceIdx = 0;
-        }
-        else if (type == (int)Character.PartType.Hair)
-        {
-            mHairIdx++;
-            if (mHairIdx >= mHairList.Count)
-                mHairIdx = 0;
-        }
-        else if (type == (int)Character.PartType.Pants)
-        {
-            mPantsIdx++;
-            if (mPantsIdx >= mPantsList.Count)
-                mPantsIdx = 0;
-        }
-        else if (type == (int)Character.PartType.Shoes)
-        {
-            mShoesIdx++;
-            if (mShoesIdx >= mShoesList.Count)
-                mShoesIdx = 0;
-        }
-        else if (type == (int)Character.PartType.Top)
-        {
-            mTopIdx++;
-            if (mTopIdx >= mTopList.Count)
-                mTopIdx = 0;
-        }
+
     }
 
     public void ReduceIndex(int type)
     {
-        if (type == (int)Character.PartType.Eyes)
-        {
-            mEyesIdx--;
-            if (mEyesIdx < 0)
-                mEyesIdx = mEyesList.Count - 1;
-        }
-        else if (type == (int)Character.PartType.Face)
-        {
-            mFaceIdx--;
-            if (mFaceIdx < 0)
-                mFaceIdx = mFaceList.Count - 1;
-        }
-        else if (type == (int)Character.PartType.Hair)
-        {
-            mHairIdx--;
-            if (mHairIdx < 0)
-                mHairIdx = mHairList.Count - 1;
-        }
-        else if (type == (int)Character.PartType.Pants)
-        {
-            mPantsIdx--;
-            if (mPantsIdx < 0)
-                mPantsIdx = mPantsList.Count - 1;
-        }
-        else if (type == (int)Character.PartType.Shoes)
-        {
-            mShoesIdx--;
-            if (mShoesIdx < 0)
-                mShoesIdx = mShoesList.Count - 1;
-        }
-        else if (type == (int)Character.PartType.Top)
-        {
-            mTopIdx--;
-            if (mTopIdx < 0)
-                mTopIdx = mTopList.Count - 1;
-        }
+
     }
 }
 
 public class Main : MonoBehaviour
 {
     #region 常量
-
-    const string SkeletonName = "skeleton";
-    const string BoneAssetName = "bonenames";
-    const string EyesName = "eyes";
-    const string FaceName = "face";
-    const string HairName = "hair";
-    const string PantsName = "pants";
-    const string ShoesName = "shoes";
-    const string TopName = "top";
 
     const int typeWidth = 240;
     const int typeheight = 100;
@@ -203,12 +106,12 @@ public class Main : MonoBehaviour
         GUILayout.EndHorizontal();
 
         // Buttons for changing character elements.
-        AddCategory((int)Character.PartType.Face, "Head", null);
-        AddCategory((int)Character.PartType.Eyes, "Eyes", null);
-        AddCategory((int)Character.PartType.Hair, "Hair", null);
-        AddCategory((int)Character.PartType.Top, "Body", "item_shirt");
-        AddCategory((int)Character.PartType.Pants, "Legs", "item_pants");
-        AddCategory((int)Character.PartType.Shoes, "Feet", "item_boots");
+        AddCategory((int)CharacterPartType.Face, "Head", null);
+        AddCategory((int)CharacterPartType.Eyes, "Eyes", null);
+        AddCategory((int)CharacterPartType.Hair, "Hair", null);
+        AddCategory((int)CharacterPartType.Top, "Body", "item_shirt");
+        AddCategory((int)CharacterPartType.Pants, "Legs", "item_pants");
+        AddCategory((int)CharacterPartType.Shoes, "Feet", "item_boots");
 
         // anim
         GUILayout.BeginHorizontal();
@@ -280,14 +183,26 @@ public class Main : MonoBehaviour
             mAvatarResList.Add(avatarres);
 
             avatarres.mName = dirname;
-            avatarres.mSkeleton = FindRes(golist, SkeletonName)[0];
+            avatarres.mSkeleton = FindRes(golist, Character.SKELETON_NAME)[0];
             avatarres.mBoneHolder = boneHolder[0];
-            avatarres.mEyesList = FindRes(golist, EyesName);
-            avatarres.mFaceList = FindRes(golist, FaceName);
-            avatarres.mHairList = FindRes(golist, HairName);
-            avatarres.mPantsList = FindRes(golist, PantsName);
-            avatarres.mShoesList = FindRes(golist, ShoesName);
-            avatarres.mTopList = FindRes(golist, TopName);
+
+            avatarres.partList.Clear();
+            for (int i = 0; i < (int)CharacterPartType.TotalNum; i++)
+            {
+                var partName = Character.PART_NAMES[i];
+                var partPrefab = FindRes(golist, partName)[0];
+
+                AvatarResPart part = new AvatarResPart();
+                part.prefab = partPrefab;
+                avatarres.partList.Add(part);
+            }
+
+            //avatarres.mEyes = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Eyes])[0];
+            //avatarres.mFace = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Face])[0];
+            //avatarres.mHair = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Hair])[0];
+            //avatarres.mPants = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Pants])[0];
+            //avatarres.mShoes = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Shoes])[0];
+            //avatarres.mTop = FindRes(golist, Character.PART_NAMES[(int)CharacterPartType.Top])[0];
 
             string animpath = "Assets/Anims/" + dirname + "/";
             List<AnimationClip> clips = FunctionUtil.CollectAll<AnimationClip>(animpath);

@@ -6,6 +6,14 @@ using UnityEngine;
 public class PartBoneNamesHolder : ScriptableObject
 {
     [Serializable]
+    public struct TransInfo
+    {
+        public Vector3 localPos;
+        public Quaternion localRot;
+        public Vector3 localScale;
+    }
+
+    [Serializable]
     public struct Info
     {
         public string partName;
@@ -13,9 +21,7 @@ public class PartBoneNamesHolder : ScriptableObject
         public string[] boneNames;
 
         public Bounds bounds;
-        public Vector3 localPos;
-        public Quaternion localRot;
-        public Vector3 localScale;
+        public TransInfo trans;
     }
 
     [SerializeField]
@@ -41,9 +47,9 @@ public class PartBoneNamesHolder : ScriptableObject
         info.boneNames = boneNameList.ToArray();
 
         info.bounds = smr.bounds;
-        info.localPos = smr.gameObject.transform.localPosition;
-        info.localRot = smr.gameObject.transform.localRotation;
-        info.localScale = smr.gameObject.transform.localScale;
+        info.trans.localPos = smr.gameObject.transform.localPosition;
+        info.trans.localRot = smr.gameObject.transform.localRotation;
+        info.trans.localScale = smr.gameObject.transform.localScale;
 
         m_Infos.Add(info);
     }

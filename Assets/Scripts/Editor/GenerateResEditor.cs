@@ -8,13 +8,14 @@ using System;
 public class GenerateResEditor : Editor
 {
     const string ANIM_PATH = "Assets/Anims/";
+    const string MESH_PATH = "Assets/Meshs/";
     const string MAT_PATH = "Assets/Materials/";
     const string Prefab_PATH = "Assets/Resources/";
     const string FBX_SUFFIX = ".fbx";
     const string ANIM_SUFFIX = ".anim";
+    const string MESH_SUFFIX = ".mesh";
     const string PREAFAB_SUFFIX = ".prefab";
     const string INVALID_ANIM_NAME = "__preview__";
-    const string BONE_NAME_ASSET_NAME = "bonenames.asset";
     const string ASSET_SUFFIX = ".asset";
 
     [MenuItem("Avatar2/Generate")]
@@ -35,6 +36,7 @@ public class GenerateResEditor : Editor
             Directory.Delete(Prefab_PATH, true);
 
         GenerateAllAnim(objs);
+        GenerateAllMesh(objs);
         GenerateAllPrefab(objs);
         GenerateAllSkeleton(objs);
     }
@@ -86,7 +88,7 @@ public class GenerateResEditor : Editor
             return;
 
         GameObject obj = GameObject.Instantiate(srcobj);
-        obj.name = middir + "_skeleton";
+        obj.name = middir + Character.SKELETON_NAME;
         obj.transform.position = Vector3.zero;
         obj.transform.rotation = Quaternion.identity;
         obj.transform.localScale = Vector3.one;
@@ -204,7 +206,7 @@ public class GenerateResEditor : Editor
             GameObject.DestroyImmediate(rendererParent);
         }
 
-        var assetPath = prefabpath + BONE_NAME_ASSET_NAME;
+        var assetPath = prefabpath + Character.BONE_ASSET_NAME + ASSET_SUFFIX;
         AssetDatabase.CreateAsset(partHolder, assetPath);
     }
 
@@ -233,7 +235,26 @@ public class GenerateResEditor : Editor
         return false;
     }
 
-    private static void GenerateAllAnim(List<GameObject> objs)
+    static void GenerateAllMesh(List<GameObject> objs)
+    {
+        foreach (var obj in objs)
+        {
+            if (obj == null)
+                continue;
+
+            string path = AssetDatabase.GetAssetPath(obj);
+            string dir = Path.GetDirectoryName(path);
+            string filename = Path.GetFileNameWithoutExtension(path);
+
+            dir = dir.Replace("\\", "/");
+            string[] splitdirs = dir.Split('/');
+            string middir = splitdirs[splitdirs.Length - 1];
+
+            GenerateMesh(dir, middir, filename);
+        }
+    }
+
+    static void GenerateAllAnim(List<GameObject> objs)
     {
         foreach(var obj in objs)
         {
@@ -252,17 +273,61 @@ public class GenerateResEditor : Editor
         }
     }
 
+    static void GenerateMesh(string dir, string middir, string fbxname)
+    {
+        string meshPath = MESH_PATH + "/" + middir + "/";
+
+        DirectoryInfo dirinfo = new DirectoryInfo(dir);
+        if (!dirinfo.Exists)
+            return;
+
+        dirinfo = new DirectoryInfo(meshPath);
+        if (!dirinfo.Exists)
+        {
+            Directory.CreateDirectory(meshPath);
+        }
+
+        var files = Directory.GetFiles(dir, "*.fbx");
+        foreach (var file in files)
+        {
+            if (file.Contains("@"))
+                continue;
+
+            UnityEngine.Object[] meshObjs = AssetDatabase.LoadAllAssetsAtPath(file);
+            if (meshObjs.Length <= 0)
+                continue;
+
+            foreach (var meshObj in meshObjs)
+            {
+                Mesh srcMesh = meshObj as Mesh;
+                if (srcMesh == null)
+                    continue;
+
+                if (srcMesh.name.Contains(INVALID_ANIM_NAME))
+                    continue;
+
+                string dstMeshPath = meshPath + srcMesh.name + MESH_SUFFIX;
+                Mesh dstMesh = AssetDatabase.LoadAssetAtPath(dstMeshPath, typeof(Mesh)) as Mesh;
+                if (dstMesh != null)
+                {
+                    AssetDatabase.DeleteAsset(dstMeshPath);
+                }
+
+                Mesh tempMesh = CopyMeshData(srcMesh);
+                //EditorUtility.CopySerialized(srcMesh, tempMesh);
+
+                AssetDatabase.CreateAsset(tempMesh, dstMeshPath);
+            }
+        }
+    }
+
     /// <summary>
     /// 生成一个动画资源
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="path"></param>
-    private static void GenerateAnim(string dir, string middir, string fbxname)
-    {
-        SplitAnimClip(dir, middir, fbxname);
-    }
-
-    private static void SplitAnimClip(string dir, string middir, string fbxname)
+    /// <param name="dir"></param>
+    /// <param name="middir"></param>
+    /// <param name="fbxname"></param>
+    static void GenerateAnim(string dir, string middir, string fbxname)
     {
         string clippath = ANIM_PATH + "/" + middir + "/";
 
@@ -305,5 +370,234 @@ public class GenerateResEditor : Editor
                 AssetDatabase.CreateAsset(tempclip, dstclippath);
             }
         }
+    }
+
+    static int[] GetNewVertexIndexes(Vector3[] vertices, Vector2[] uv, out int newVertexCount)
+    {
+        int vertexCount = vertices.Length;
+        int[] vertexIndexs = new int[vertexCount];
+
+        float posDiff = 0.001f;
+        float posSQDiff = posDiff * posDiff;
+
+        float uvDiff = 0.1f;
+        float uvSQDiff = uvDiff * uvDiff;
+
+        for (int i = 0; i < vertexCount; ++i)
+        {
+            vertexIndexs[i] = i;
+        }
+
+        for (int i = 0; i < vertexCount; ++i)
+        {
+            // 顶点已经被重定向了，不需要再次计算
+            if (vertexIndexs[i] != i)
+            {
+                continue;
+            }
+
+            for (int j = i + 1; j < vertexCount; ++j)
+            {
+                Vector3 v0 = vertices[i];
+                Vector3 v1 = vertices[j];
+
+                Vector2 uv0 = uv[i];
+                Vector2 uv1 = uv[j];
+
+                if ((v0.x - v1.x) * (v0.x - v1.x) + (v0.y - v1.y) * (v0.y - v1.y) + (v0.z - v1.z) * (v0.z - v1.z) <= posSQDiff)
+                {
+                    //if ((uv0.x - uv1.x) * (uv0.x - uv1.x) + (uv0.y - uv1.y) * (uv0.y - uv1.y) <= uvSQDiff)
+                    {
+                        vertexIndexs[j] = i;
+                    }
+                }
+            }
+        }
+
+        newVertexCount = 0;
+
+        for (int i = 0; i < vertexCount; ++i)
+        {
+            if (vertexIndexs[i] == i)
+            {
+                ++newVertexCount;
+            }
+        }
+
+        return vertexIndexs;
+    }
+
+    static Mesh CopyMeshData(Mesh mesh)
+    {
+        int vertexCount = mesh.vertexCount;
+        int subMeshCount = mesh.subMeshCount;
+        var subMeshTriangles = new int[subMeshCount][];
+        for (int i = 0; i < subMeshCount; i++)
+        {
+            subMeshTriangles[i] = mesh.GetTriangles(i);
+        }
+
+        // old data
+        Vector3[] vertices = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        Vector4[] tangents = mesh.tangents;
+
+        Vector2[] uv = mesh.uv;
+        Vector2[] uv2 = mesh.uv2;
+        Vector2[] uv3 = mesh.uv3;
+        Vector2[] uv4 = mesh.uv4;
+        Vector2[] uv5 = mesh.uv5;
+        Vector2[] uv6 = mesh.uv6;
+        Vector2[] uv7 = mesh.uv7;
+        Vector2[] uv8 = mesh.uv8;
+
+        Color[] colors = mesh.colors;
+        BoneWeight[] boneWeights = mesh.boneWeights;
+        Matrix4x4[] bindposes = mesh.bindposes;
+
+
+        // new data
+        int newVertexCount = 0;
+        int[] newVertexIndexes = GetNewVertexIndexes(vertices, uv, out newVertexCount);
+
+        Vector3[] newVertices = new Vector3[newVertexCount];
+        Vector3[] newNormals = new Vector3[normals.Length == 0 ? 0 : newVertexCount];
+        Vector4[] newTangents = new Vector4[tangents.Length == 0 ? 0 : newVertexCount];
+
+        Vector2[] newUv = new Vector2[uv.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv2 = new Vector2[uv2.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv3 = new Vector2[uv3.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv4 = new Vector2[uv4.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv5 = new Vector2[uv5.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv6 = new Vector2[uv6.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv7 = new Vector2[uv7.Length == 0 ? 0 : newVertexCount];
+        Vector2[] newUv8 = new Vector2[uv8.Length == 0 ? 0 : newVertexCount];
+
+        Color[] newColors = new Color[colors.Length == 0 ? 0 : newVertexCount];
+        BoneWeight[] newBoneWeights = new BoneWeight[boneWeights.Length == 0 ? 0 : newVertexCount];
+
+        int pos = 0;
+        int[] vertexRedirectIndexes = new int[vertexCount];
+        for (int i = 0; i < vertexCount; ++i)
+        {
+            int newIndex = newVertexIndexes[i];
+            vertexRedirectIndexes[i] = -1;
+
+            // 重定向
+            if (newIndex != i)
+            {
+                continue;
+            }
+
+            vertexRedirectIndexes[i] = pos;
+
+            // 没有重定向，直接拷贝
+            newVertices[pos] = vertices[i];
+
+            if (newNormals.Length != 0)
+            {
+                newNormals[pos] = normals[i];
+            }
+
+            if (newTangents.Length != 0)
+            {
+                newTangents[pos] = tangents[i];
+            }
+
+            if (newUv.Length != 0)
+            {
+                newUv[pos] = uv[i];
+            }
+
+            if (newUv2.Length != 0)
+            {
+                newUv2[pos] = uv2[i];
+            }
+
+            if (newUv3.Length != 0)
+            {
+                newUv3[pos] = uv3[i];
+            }
+
+            if (newUv4.Length != 0)
+            {
+                newUv4[pos] = uv4[i];
+            }
+
+            if (newUv5.Length != 0)
+            {
+                newUv5[pos] = uv5[i];
+            }
+
+            if (newUv6.Length != 0)
+            {
+                newUv6[pos] = uv6[i];
+            }
+
+            if (newUv7.Length != 0)
+            {
+                newUv7[pos] = uv7[i];
+            }
+
+            if (newUv8.Length != 0)
+            {
+                newUv8[pos] = uv8[i];
+            }
+
+            if (newColors.Length != 0)
+            {
+                newColors[pos] = colors[i];
+            }
+
+            if (newBoneWeights.Length != 0)
+            {
+                newBoneWeights[pos] = boneWeights[i];
+            }
+
+            ++pos;
+        }
+
+        for (int i = 0; i < vertexCount; ++i)
+        {
+            if (vertexRedirectIndexes[i] == -1)
+            {
+                int newIndex = newVertexIndexes[i];
+                vertexRedirectIndexes[i] = vertexRedirectIndexes[newIndex];
+            }
+        }
+
+        foreach (var subMeshTriangle in subMeshTriangles)
+        {
+            for (int i = 0; i < subMeshTriangle.Length; ++i)
+            {
+                int v = subMeshTriangle[i];
+                subMeshTriangle[i] = vertexRedirectIndexes[v];
+            }
+        }
+
+        Mesh newMesh = new Mesh();
+        newMesh.vertices = newVertices;
+        newMesh.normals = newNormals;
+        newMesh.tangents = newTangents;
+        newMesh.uv = newUv;
+        newMesh.uv2 = newUv2;
+        newMesh.uv3 = newUv3;
+        newMesh.uv4 = newUv4;
+        newMesh.uv5 = newUv5;
+        newMesh.uv6 = newUv6;
+        newMesh.uv7 = newUv7;
+        newMesh.uv8 = newUv8;
+        newMesh.colors = newColors;
+        newMesh.boneWeights = newBoneWeights;
+        newMesh.bindposes = bindposes;
+
+        newMesh.subMeshCount = subMeshTriangles.Length;
+
+        for (int i = 0; i < subMeshTriangles.Length; ++i)
+        {
+            newMesh.SetTriangles(subMeshTriangles[i], i);
+        }
+
+        return newMesh;
     }
 }
