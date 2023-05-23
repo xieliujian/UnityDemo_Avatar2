@@ -35,6 +35,11 @@ public class CharacterPart
     /// </summary>
     public int partType;
 
+    /// <summary>
+    /// .
+    /// </summary>
+    /// <param name="cha"></param>
+    /// <param name="partPrefab"></param>
     public void Init(Character cha, GameObject partPrefab)
     {
         m_Character = cha;
@@ -49,6 +54,11 @@ public class CharacterPart
         }
     }
 
+    /// <summary>
+    /// .
+    /// </summary>
+    /// <param name="mesh"></param>
+    /// <param name="mat"></param>
     public void ChangePart(Mesh mesh, Material mat)
     {
         if (m_Character == null || m_SkinMesh == null)
@@ -70,46 +80,12 @@ public class CharacterPart
             m_SkinMesh.transform.localScale = trans.localScale;
         }
 
-        m_SkinMesh.localBounds = partAsset.GetBounds(partName);
+        // 会导致模型裁剪, 忽略没有明显问题
+        //m_SkinMesh.localBounds = partAsset.GetBounds(partName);
 
         m_SkinMesh.bones = m_Character.GetBones(partName, out Transform rootBone);
         m_SkinMesh.rootBone = rootBone;
-
-        //m_SkinMesh.rootBone = partAsset.GetBoneRootName(partName);
     }
-
-    //public void ChangeEquip(AvatarRes avatarres)
-    //{
-
-    //}
-
-    //void ShareSkeleton()
-    //{
-    //    if (m_Character == null || m_SkinMesh == null)
-    //        return;
-
-    //    var partAsset = m_Character.partAsset;
-    //    if (partAsset == null)
-    //        return;
-
-
-    //}
-
-    //void ShareSkeletonInstanceWith(SkinnedMeshRenderer selfSkin, GameObject target)
-    //{
-    //    Transform[] newBones = new Transform[selfSkin.bones.Length];
-    //    for (int i = 0; i < selfSkin.bones.GetLength(0); ++i)
-    //    {
-    //        GameObject bone = selfSkin.bones[i].gameObject;
-    //        if (bone == null)
-    //            continue;
-
-    //        // 目标的SkinnedMeshRenderer.bones保存的只是目标mesh相关的骨骼,要获得目标全部骨骼,可以通过查找的方式.
-    //        newBones[i] = FunctionUtil.FindChildRecursion(target.transform, bone.name);
-    //    }
-
-    //    selfSkin.bones = newBones;
-    //}
 }
 
 public class Character
@@ -234,6 +210,12 @@ public class Character
         }
     }
 
+    /// <summary>
+    /// .
+    /// </summary>
+    /// <param name="partType"></param>
+    /// <param name="mesh"></param>
+    /// <param name="mat"></param>
     public void ChangePart(int partType, Mesh mesh, Material mat)
     {
         CharacterPart part = null;
@@ -322,80 +304,4 @@ public class Character
             }
         }
     }
-
-    //public void Generate(AvatarRes avatarres)
-    //{
-    //    //DestroyAll();
-
-    //    //m_Skeleton = GameObject.Instantiate(avatarres.mSkeleton);
-    //    //m_Skeleton.Reset(null);
-    //    //m_Skeleton.name = avatarres.mSkeleton.name;
-
-    //    //m_Anim = m_Skeleton.GetComponent<Animation>();
-
-    //    //m_PartAsset = avatarres.mBoneHolder;
-
-    //    //for (int i = 0; i < (int)CharacterPartType.TotalNum; i++)
-    //    //{
-    //    //    ChangeEquip(i, avatarres);
-    //    //}
-
-    //    //ChangeAnim(avatarres);
-    //}
-
-    //public void ChangeAnim(AvatarRes avatarres)
-    //{
-    //    if (m_Anim == null)
-    //        return;
-
-    //    //AnimationClip animclip = avatarres.mAnimList[avatarres.mAnimIdx];
-    //    //m_Anim.wrapMode = WrapMode.Loop;
-    //    //m_Anim.Play(animclip.name);
-    //}
-
-    //void DestroyAll()
-    //{
-    //    if (m_Skeleton != null)
-    //    {
-    //        GameObject.DestroyImmediate(m_Skeleton);
-    //    }
-
-    //    m_PartDict.Clear();
-    //}
-
-    //void ChangeEquip(ref GameObject go, GameObject resgo)
-    //{
-    //    if (go != null)
-    //    {
-    //        GameObject.DestroyImmediate(go);
-    //    }
-
-    //    go = GameObject.Instantiate(resgo);
-    //    go.Reset(m_Skeleton);
-    //    go.name = resgo.name;
-
-    //    SkinnedMeshRenderer render = go.GetComponentInChildren<SkinnedMeshRenderer>();
-    //    ShareSkeletonInstanceWith(render, m_Skeleton);
-    //}
-
-    ///// <summary>
-    ///// 共享骨骼
-    ///// </summary>
-    ///// <param name="selfSkin"></param>
-    ///// <param name="target"></param>
-    //void ShareSkeletonInstanceWith(SkinnedMeshRenderer selfSkin, GameObject target)
-    //{
-    //    Transform[] newBones = new Transform[selfSkin.bones.Length];
-    //    for (int i = 0; i < selfSkin.bones.GetLength(0); ++i)
-    //    {
-    //        GameObject bone = selfSkin.bones[i].gameObject;
-    //        if (bone == null)
-    //            continue;
-
-    //        // 目标的SkinnedMeshRenderer.bones保存的只是目标mesh相关的骨骼,要获得目标全部骨骼,可以通过查找的方式.
-    //        newBones[i] = FunctionUtil.FindChildRecursion(target.transform, bone.name);
-    //    }
-
-    //    selfSkin.bones = newBones;
-    //}
 }
