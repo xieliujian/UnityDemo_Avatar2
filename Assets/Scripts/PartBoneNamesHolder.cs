@@ -46,7 +46,9 @@ public class PartBoneNamesHolder : ScriptableObject
 
         info.boneNames = boneNameList.ToArray();
 
-        info.bounds = smr.bounds;
+        info.bounds = smr.localBounds;
+
+        info.trans = new TransInfo();
         info.trans.localPos = smr.gameObject.transform.localPosition;
         info.trans.localRot = smr.gameObject.transform.localRotation;
         info.trans.localScale = smr.gameObject.transform.localScale;

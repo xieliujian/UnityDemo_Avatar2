@@ -81,7 +81,7 @@ public class CharacterPart
         }
 
         // 会导致模型裁剪, 忽略没有明显问题
-        //m_SkinMesh.localBounds = partAsset.GetBounds(partName);
+        m_SkinMesh.localBounds = partAsset.GetBounds(partName);
 
         m_SkinMesh.bones = m_Character.GetBones(partName, out Transform rootBone);
         m_SkinMesh.rootBone = rootBone;
