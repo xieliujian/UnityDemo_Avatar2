@@ -68,7 +68,7 @@ public class AvatarResPart
         matIdx = 0;
     }
 
-    public void AddIndex()
+    public void AddMeshIndex()
     {
         meshIdx++;
 
@@ -78,13 +78,33 @@ public class AvatarResPart
         }
     }
 
-    public void ReduceIndex()
+    public void ReduceMeshIndex()
     {
         meshIdx--;
 
         if (meshIdx < 0)
         {
             meshIdx = meshList.Count - 1;
+        }
+    }
+
+    public void AddMatIndex()
+    {
+        matIdx++;
+
+        if (matIdx >= matList.Count)
+        {
+            matIdx = 0;
+        }
+    }
+
+    public void ReduceMatIndex()
+    {
+        matIdx--;
+
+        if (matIdx < 0)
+        {
+            matIdx = matList.Count - 1;
         }
     }
 }
@@ -102,36 +122,66 @@ public class AvatarRes
     public GameObject mSkeleton;
     public List<AvatarResPart> partList = new List<AvatarResPart>();
 
+    public int mAnimIdx;
+
     public void Reset()
     {
-
+        mAnimIdx = 0;  
     }
 
     public void AddAnimIdx()
     {
+        mAnimIdx++;
 
+        if (mAnimIdx >= mAnimList.Count)
+        {
+            mAnimIdx = 0;
+        }
     }
 
     public void ReduceAnimIdx()
     {
+        mAnimIdx--;
 
-    }
-
-    public void AddIndex(int type)
-    {
-        var part = partList[type];
-        if (part != null)
+        if (mAnimIdx < 0)
         {
-            part.AddIndex();
+            mAnimIdx = mAnimList.Count - 1;
         }
     }
 
-    public void ReduceIndex(int type)
+    public void AddMeshIndex(int type)
     {
         var part = partList[type];
         if (part != null)
         {
-            part.ReduceIndex();
+            part.AddMeshIndex();
+        }
+    }
+
+    public void ReduceMeshIndex(int type)
+    {
+        var part = partList[type];
+        if (part != null)
+        {
+            part.ReduceMeshIndex();
+        }
+    }
+
+    public void AddMatIndex(int type)
+    {
+        var part = partList[type];
+        if (part != null)
+        {
+            part.AddMatIndex();
+        }
+    }
+
+    public void ReduceMatIndex(int type)
+    {
+        var part = partList[type];
+        if (part != null)
+        {
+            part.ReduceMatIndex();
         }
     }
 }
@@ -166,7 +216,7 @@ public class Main : MonoBehaviour
         GUI.skin.box.fontSize = 50;
         GUI.skin.button.fontSize = 50;
 
-        GUILayout.BeginArea(new Rect(10, 10, typeWidth + 2 * buttonWidth + 8, 1000));
+        GUILayout.BeginArea(new Rect(10, 10, typeWidth + 150 + 2 * buttonWidth + 8, 1000));
 
         // Buttons for changing the active character.
         GUILayout.BeginHorizontal();
@@ -224,15 +274,27 @@ public class Main : MonoBehaviour
 
         if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
-            mAvatarRes.ReduceIndex(parttype);
+            mAvatarRes.ReduceMeshIndex(parttype);
+            ChangeEquip(parttype, mAvatarRes);
+        }
+
+        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        {
+            mAvatarRes.AddMeshIndex(parttype);
             ChangeEquip(parttype, mAvatarRes);
         }
 
         GUILayout.Box(displayName, GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
 
+        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        {
+            mAvatarRes.ReduceMatIndex(parttype);
+            ChangeEquip(parttype, mAvatarRes);
+        }
+
         if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
         {
-            mAvatarRes.AddIndex(parttype);
+            mAvatarRes.AddMatIndex(parttype);
             ChangeEquip(parttype, mAvatarRes);
         }
 
@@ -266,6 +328,8 @@ public class Main : MonoBehaviour
             var mat = part.FindMat();
             mCharacter.ChangePart(i, mesh, mat);
         }
+
+        ChangeAnim(res);
     }
 
     void CreateAllAvatarRes()
@@ -315,12 +379,19 @@ public class Main : MonoBehaviour
 
     void ChangeEquip(int parttype, AvatarRes res)
     {
+        var part = mAvatarRes.partList[parttype];
+        if (part == null)
+            return;
 
+        var mesh = part.FindMesh();
+        var mat = part.FindMat();
+        mCharacter.ChangePart(parttype, mesh, mat);
     }
 
     void ChangeAnim(AvatarRes res)
     {
-
+        AnimationClip animclip = res.mAnimList[res.mAnimIdx];
+        mCharacter.ChangeAnim(animclip);
     }
 
     List<GameObject> FindRes(GameObject []golist, string findname)

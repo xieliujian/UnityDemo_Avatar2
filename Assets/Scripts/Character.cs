@@ -194,10 +194,7 @@ public class Character
     /// <param name="skeleton"></param>
     public void InitSkeleton(GameObject skeleton)
     {
-        if (m_Skeleton != null)
-        {
-            GameObject.Destroy(m_Skeleton);
-        }
+        Clear();
 
         m_Skeleton = GameObject.Instantiate(skeleton);
         m_Skeleton.Reset(null);
@@ -281,6 +278,37 @@ public class Character
         return s_TempTransList.ToArray();
     }
 
+    /// <summary>
+    /// .
+    /// </summary>
+    /// <param name="clip"></param>
+    public void ChangeAnim(AnimationClip clip)
+    {
+        if (m_Anim == null)
+            return;
+
+        m_Anim.wrapMode = WrapMode.Loop;
+        m_Anim.Play(clip.name);
+    }
+
+    /// <summary>
+    /// .
+    /// </summary>
+    void Clear()
+    {
+        m_BoneTransMap.Clear();
+
+        if (m_Skeleton != null)
+        {
+            GameObject.Destroy(m_Skeleton);
+        }
+
+        m_PartDict.Clear();
+    }
+
+    /// <summary>
+    /// .
+    /// </summary>
     void InitBoneMap()
     {
         if (m_BoneTransMap.Count <= 0)
