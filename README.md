@@ -7,7 +7,7 @@
 
 ## 优化内容，使在实际项目中使用
 
-### 模型准备
+### 资源准备
 
 ![github](https://github.com/xieliujian/UnityDemo_Avatar2/blob/main/Video/1.png?raw=true)
 
@@ -65,6 +65,44 @@ public struct Info
 
 记录 `partName`, `rootBoneName`, `boneNames`, `bounds`, `trans`信息, 然后通过查询的方式，填充进入相应的prefab中
 
+### 重点代码
 
+```cs
+
+public void ChangePart(Mesh mesh, Material mat)
+{
+    if (m_Character == null || m_SkinMesh == null)
+        return;
+
+    var partAsset = m_Character.partAsset;
+    if (partAsset == null)
+        return;
+
+    var partName = mesh.name;
+
+    // 设置Mesh
+    m_SkinMesh.sharedMesh = mesh;
+
+    // 设置材质
+    m_SkinMesh.sharedMaterial = mat;
+
+    // 设置transform
+    var trans = partAsset.GetTransInfo(partName);
+    if (trans != null)
+    {
+        m_SkinMesh.transform.localPosition = trans.localPos;
+        m_SkinMesh.transform.localRotation = trans.localRot;
+        m_SkinMesh.transform.localScale = trans.localScale;
+    }
+
+    // 设置bounds
+    m_SkinMesh.localBounds = partAsset.GetBounds(partName);
+
+    // 设置骨骼列表和根骨骼
+    m_SkinMesh.bones = m_Character.GetBones(partName, out Transform rootBone);
+    m_SkinMesh.rootBone = rootBone;
+}
+
+```
 
 

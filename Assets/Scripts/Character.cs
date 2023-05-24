@@ -69,9 +69,14 @@ public class CharacterPart
             return;
 
         var partName = mesh.name;
+
+        // 设置Mesh
         m_SkinMesh.sharedMesh = mesh;
+
+        // 设置材质
         m_SkinMesh.sharedMaterial = mat;
 
+        // 设置transform
         var trans = partAsset.GetTransInfo(partName);
         if (trans != null)
         {
@@ -80,9 +85,10 @@ public class CharacterPart
             m_SkinMesh.transform.localScale = trans.localScale;
         }
 
-        // 会导致模型裁剪, 忽略没有明显问题
+        // 设置bounds
         m_SkinMesh.localBounds = partAsset.GetBounds(partName);
 
+        // 设置骨骼列表和根骨骼
         m_SkinMesh.bones = m_Character.GetBones(partName, out Transform rootBone);
         m_SkinMesh.rootBone = rootBone;
     }
