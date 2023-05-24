@@ -1,6 +1,10 @@
 
 # Unity的Avatar换装第二版
 
+## Demo示例
+
+![github](https://github.com/xieliujian/UnityDemo_Avatar2/blob/main/Video/1.gif?raw=true)
+
 ## 第一版换装链接
 
 [UnityDemo_Avatar](https://github.com/xieliujian/UnityDemo_Avatar)
