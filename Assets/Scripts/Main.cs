@@ -12,7 +12,7 @@ public class AvatarResPart
 
     public List<Mesh> meshList = new List<Mesh>();
 
-    public List<Material> matList = new List<Material>();
+    List<List<Material>> matList = new List<List<Material>>();
 
     public int meshIdx;
 
@@ -23,7 +23,8 @@ public class AvatarResPart
         if (meshArray == null)
             return;
 
-        foreach(var mesh in meshArray)
+        meshList.Clear();
+        foreach (var mesh in meshArray)
         {
             if (mesh == null)
                 continue;
@@ -32,6 +33,12 @@ public class AvatarResPart
             {
                 meshList.Add(mesh);
             }
+        }
+
+        matList.Clear();
+        for (int i = 0; i < meshList.Count; i++)
+        {
+            matList.Add(new List<Material>());
         }
     }
 
@@ -45,16 +52,18 @@ public class AvatarResPart
             if (mat == null)
                 continue;
 
-            if (mat.name.Contains(partName))
+            var list = FindMatInternalList(mat);
+            if (list != null)
             {
-                matList.Add(mat);
+                list.Add(mat);
             }
         }
     }
 
     public Material FindMat()
     {
-        return matList[matIdx];
+        var list = matList[meshIdx];
+        return list[matIdx];
     }
 
     public Mesh FindMesh()
@@ -71,6 +80,7 @@ public class AvatarResPart
     public void AddMeshIndex()
     {
         meshIdx++;
+        matIdx = 0;
 
         if (meshIdx >= meshList.Count)
         {
@@ -81,6 +91,7 @@ public class AvatarResPart
     public void ReduceMeshIndex()
     {
         meshIdx--;
+        matIdx = 0;
 
         if (meshIdx < 0)
         {
@@ -92,7 +103,7 @@ public class AvatarResPart
     {
         matIdx++;
 
-        if (matIdx >= matList.Count)
+        if (matIdx >= matList[meshIdx].Count)
         {
             matIdx = 0;
         }
@@ -104,8 +115,25 @@ public class AvatarResPart
 
         if (matIdx < 0)
         {
-            matIdx = matList.Count - 1;
+            matIdx = matList[meshIdx].Count - 1;
         }
+    }
+
+    List<Material> FindMatInternalList(Material mat)
+    {
+        for (int i = 0; i < meshList.Count; i++)
+        {
+            var mesh = meshList[i];
+            if (mesh == null)
+                continue;
+
+            if (mat.name.Contains(mesh.name))
+            {
+                return matList[i];
+            }
+        }
+
+        return null;
     }
 }
 
@@ -326,7 +354,11 @@ public class Main : MonoBehaviour
 
             var mesh = part.FindMesh();
             var mat = part.FindMat();
-            mCharacter.ChangePart(i, mesh, mat);
+
+            List<Material> matList = new List<Material>();
+            matList.Add(mat);
+
+            mCharacter.ChangePart(i, mesh, matList);
         }
 
         ChangeAnim(res);
@@ -385,7 +417,11 @@ public class Main : MonoBehaviour
 
         var mesh = part.FindMesh();
         var mat = part.FindMat();
-        mCharacter.ChangePart(parttype, mesh, mat);
+
+        List<Material> matList = new List<Material>();
+        matList.Add(mat);
+
+        mCharacter.ChangePart(parttype, mesh, matList);
     }
 
     void ChangeAnim(AvatarRes res)
