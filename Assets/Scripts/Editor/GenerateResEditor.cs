@@ -189,6 +189,8 @@ public class GenerateResEditor : Editor
                             {
                                 newSkinMesh.sharedMaterials[i] = null;
                             }
+
+                            newSkinMesh.sharedMaterial = null;
                         }
 
                         string dstpath = prefabpath + newobj.name + PREAFAB_SUFFIX;
