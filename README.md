@@ -89,6 +89,7 @@ public void ChangePart(Mesh mesh, List<Material> matList)
 
     // 设置材质 (真实项目里面，这里动态加载材质路径列表，然后填充进入列表)
     // 例如 mat1path|mat2path|mat3path, 加载这些资源，然后加入列表里面
+    // 例如眼睛等部件，可能会有多个材质，所以这里需要是材质列表
     m_MatList.Clear();
     m_MatList.AddRange(matList);
     m_SkinMesh.sharedMaterials = m_MatList.ToArray();
