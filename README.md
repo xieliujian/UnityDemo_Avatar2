@@ -113,4 +113,8 @@ public void ChangePart(Mesh mesh, List<Material> matList)
 
 ```
 
+## 脸贴花
+
+![github](https://github.com/xieliujian/UnityDemo_Avatar2/blob/main/Video/5.png?raw=true)
+
 
