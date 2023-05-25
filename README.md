@@ -117,4 +117,71 @@ public void ChangePart(Mesh mesh, List<Material> matList)
 
 ![github](https://github.com/xieliujian/UnityDemo_Avatar2/blob/main/Video/5.png?raw=true)
 
+贴花矩阵计算代码
 
+```cs
+
+public static Matrix4x4 TransformUV(float rotation, Vector2 translate, float scale)
+{
+    Matrix4x4 matrix = Matrix4x4.identity;
+
+    // rotate
+    float radian = rotation * Mathf.Deg2Rad;
+    float cosRadian = Mathf.Cos(radian);
+    float sinRadian = Mathf.Sin(radian);
+    Matrix4x4 rotateM = new Matrix4x4(new Vector4(cosRadian, sinRadian, 0, 0),
+                                        new Vector4(-sinRadian, cosRadian, 0, 0),
+                                        new Vector4(0, 0, 1, 0),
+                                        new Vector4(0, 0, 0, 1));
+
+    if (scale == 0)
+    {
+        scale = 1;
+    }
+
+    float invScale = 1 / scale;
+    float offestX = -translate.x * invScale - 0.5f * invScale;
+    float offsetY = -translate.y * invScale - 0.5f * invScale;
+
+    // anchor translate
+    Matrix4x4 preTranslateM = new Matrix4x4(new Vector4(1, 0, 0.5f, 0),
+                                            new Vector4(0, 1, 0.5f, 0),
+                                            new Vector4(0, 0, 1, 0),
+                                            new Vector4(0, 0, 0, 1));
+
+    // translate
+    Matrix4x4 translateM = new Matrix4x4(new Vector4(1, 0, offestX, 0),
+                                        new Vector4(0, 1, offsetY, 0),
+                                        new Vector4(0, 0, 1, 0),
+                                        new Vector4(0, 0, 0, 1));
+
+    // scale
+    Matrix4x4 scaleM = new Matrix4x4(new Vector4(invScale, 0, 0, 0),
+                                    new Vector4(0, invScale, 0, 0),
+                                    new Vector4(0, 0, 1, 0),
+                                    new Vector4(0, 0, 0, 1));
+
+    matrix = scaleM * translateM * rotateM * preTranslateM;
+
+    return matrix;
+}
+
+```
+
+贴花shader计算
+
+```cs
+
+half4 CalcDecal(float2 uv)
+{
+    half3x3 calMatrix = half3x3(_FaceDecalUVMatrixM0.xyz,
+        _FaceDecalUVMatrixM1.xyz,
+        _FaceDecalUVMatrixM2.xyz);
+
+    uv = saturate(mul(calMatrix, half3(uv, 1)).xy);
+    half4 decalColor = tex2D(_FaceDecalTex, uv) * _FaceDecalColor;
+
+    return decalColor;
+}
+
+```
