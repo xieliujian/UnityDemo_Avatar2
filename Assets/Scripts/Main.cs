@@ -1,8 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using System.IO;
 
 public class AvatarResPart
 {
@@ -62,12 +60,15 @@ public class AvatarResPart
 
     public Material FindMat()
     {
+        if (matList.Count == 0 || meshIdx >= matList.Count) return null;
         var list = matList[meshIdx];
+        if (list.Count == 0 || matIdx >= list.Count) return null;
         return list[matIdx];
     }
 
     public Mesh FindMesh()
     {
+        if (meshList.Count == 0 || meshIdx >= meshList.Count) return null;
         return meshList[meshIdx];
     }
 
@@ -139,10 +140,16 @@ public class AvatarResPart
 
 public class AvatarRes
 {
-    public const string MESH_PATH = "Assets/Meshs/";
-    public const string ANIM_PATH = "Assets/Anims/";
+    // 编辑器生成工具使用的根目录（System.IO 路径）
     public const string Prefab_PATH = "Assets/Resources/";
-    public const string MAT_PATH = "Assets/Materials/";
+
+    // Resources.LoadAll 的子路径（相对于 Assets/Resources/<CharName>/）
+    public const string MESH_SUBPATH = "Meshs";
+    public const string ANIM_SUBPATH = "Anims";
+    public const string MAT_SUBPATH = "Materials";
+
+    // 已知的角色目录名，替代运行时扫描文件系统（WebGL 无文件系统访问）
+    public static readonly string[] CHAR_NAMES = { "Female", "Male" };
 
     public string mName;
     public PartBoneNamesHolder mBoneHolder;
@@ -216,9 +223,17 @@ public class AvatarRes
 
 public class Main : MonoBehaviour
 {
-    const int typeWidth = 240;
-    const int typeheight = 100;
+    // 参考分辨率，所有 GUI 尺寸基于此设计
+    const float REF_WIDTH  = 1920f;
+    const float REF_HEIGHT = 1080f;
+
+    const int typeWidth   = 240;
+    const int typeHeight  = 100;
     const int buttonWidth = 60;
+    const int fontSize    = 50;
+
+    [Header("摄像机控制器（可选）")]
+    public CameraController cameraController;
 
     private List<AvatarRes> mAvatarResList = new List<AvatarRes>(); 
     private AvatarRes mAvatarRes = null;
@@ -226,101 +241,92 @@ public class Main : MonoBehaviour
 
     private Character mCharacter = new Character();
 
-    // Use this for initialization
-    void Start ()
+    void Start()
     {
+        if (cameraController == null)
+            cameraController = FindObjectOfType<CameraController>();
+
         CreateAllAvatarRes();
         InitCharacter();
     }
-	
-	// Update is called once per frame
-	void Update ()
-    {
-		
-	}
+
+    void Update() { }
 
     void OnGUI()
     {
-        GUI.skin.box.fontSize = 50;
-        GUI.skin.button.fontSize = 50;
+        // 按参考分辨率等比缩放，保持宽高比，居左上对齐
+        float scale = Mathf.Min(Screen.width / REF_WIDTH, Screen.height / REF_HEIGHT);
+        GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
 
-        GUILayout.BeginArea(new Rect(10, 10, typeWidth + 150 + 2 * buttonWidth + 8, 1000));
+        GUI.skin.box.fontSize    = fontSize;
+        GUI.skin.button.fontSize = fontSize;
 
-        // Buttons for changing the active character.
+        int areaWidth = typeWidth + 2 * buttonWidth + 8;
+        GUILayout.BeginArea(new Rect(10, 10, areaWidth, REF_HEIGHT - 20));
+
         GUILayout.BeginHorizontal();
-
-        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             ReduceAvatarRes();
             Generate(mAvatarRes);
+            cameraController?.ResetAngle();
         }
-
-        GUILayout.Box("Character", GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
-
-        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        GUILayout.Box("Character", GUILayout.Width(typeWidth), GUILayout.Height(typeHeight));
+        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             AddAvatarRes();
             Generate(mAvatarRes);
+            cameraController?.ResetAngle();
         }
-
         GUILayout.EndHorizontal();
 
-        // Buttons for changing character elements.
-        AddCategory((int)CharacterPartType.Face, "Head", null);
-        AddCategory((int)CharacterPartType.Eyes, "Eyes", null);
-        AddCategory((int)CharacterPartType.Hair, "Hair", null);
-        AddCategory((int)CharacterPartType.Top, "Body", "item_shirt");
+        AddCategory((int)CharacterPartType.Face,  "Head", null);
+        AddCategory((int)CharacterPartType.Eyes,  "Eyes", null);
+        AddCategory((int)CharacterPartType.Hair,  "Hair", null);
+        AddCategory((int)CharacterPartType.Top,   "Body", "item_shirt");
         AddCategory((int)CharacterPartType.Pants, "Legs", "item_pants");
         AddCategory((int)CharacterPartType.Shoes, "Feet", "item_boots");
 
-        // anim
         GUILayout.BeginHorizontal();
-
-        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             mAvatarRes.ReduceAnimIdx();
             ChangeAnim(mAvatarRes);
         }
-
-        GUILayout.Box("Anim", GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
-
-        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        GUILayout.Box("Anim", GUILayout.Width(typeWidth), GUILayout.Height(typeHeight));
+        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             mAvatarRes.AddAnimIdx();
             ChangeAnim(mAvatarRes);
         }
-
         GUILayout.EndHorizontal();
 
         GUILayout.EndArea();
     }
 
-    // Draws buttons for configuring a specific category of items, like pants or shoes.
     void AddCategory(int parttype, string displayName, string anim)
     {
         GUILayout.BeginHorizontal();
 
-        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             mAvatarRes.ReduceMeshIndex(parttype);
             ChangeEquip(parttype, mAvatarRes);
         }
-
-        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             mAvatarRes.AddMeshIndex(parttype);
             ChangeEquip(parttype, mAvatarRes);
         }
 
-        GUILayout.Box(displayName, GUILayout.Width(typeWidth), GUILayout.Height(typeheight));
+        GUILayout.Box(displayName, GUILayout.Width(typeWidth), GUILayout.Height(typeHeight));
 
-        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        if (GUILayout.Button("<", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             mAvatarRes.ReduceMatIndex(parttype);
             ChangeEquip(parttype, mAvatarRes);
         }
-
-        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeheight)))
+        if (GUILayout.Button(">", GUILayout.Width(buttonWidth), GUILayout.Height(typeHeight)))
         {
             mAvatarRes.AddMatIndex(parttype);
             ChangeEquip(parttype, mAvatarRes);
@@ -344,16 +350,27 @@ public class Main : MonoBehaviour
         mCharacter.InitSkeleton(res.mSkeleton);
         mCharacter.InitPartAsset(res.mBoneHolder);
 
+        // 骨骼加载完成后立即绑定摄像机目标，部件加载失败也不影响摄像机跟随
+        if (cameraController != null && mCharacter.skeleton != null)
+            cameraController.target = mCharacter.skeleton.transform;
+
         for (int i = 0; i < (int)CharacterPartType.TotalNum; i++)
         {
             var part = res.partList[i];
             if (part == null)
                 continue;
 
-            mCharacter.InitPart(i, part.prefab);
-
             var mesh = part.FindMesh();
             var mat = part.FindMat();
+
+            if (mesh == null || mat == null)
+            {
+                Debug.LogWarning($"[Generate] 部件 {part.partName} 的 Mesh 或 Material 未加载，" +
+                    $"请确认资源已放在 Assets/Resources/{res.mName}/{AvatarRes.MESH_SUBPATH}/ 和 {AvatarRes.MAT_SUBPATH}/ 下");
+                continue;
+            }
+
+            mCharacter.InitPart(i, part.prefab);
 
             List<Material> matList = new List<Material>();
             matList.Add(mat);
@@ -366,15 +383,17 @@ public class Main : MonoBehaviour
 
     void CreateAllAvatarRes()
     {
-        DirectoryInfo dir = new DirectoryInfo(AvatarRes.Prefab_PATH);
-        foreach(var subdir in dir.GetDirectories())
+        // 使用已知角色名列表，避免在 WebGL/运行时使用 System.IO 扫描文件系统
+        foreach (string dirname in AvatarRes.CHAR_NAMES)
         {
-            string[] splits = subdir.Name.Split('/');
-            string dirname = splits[splits.Length - 1];
-
-            GameObject [] golist = Resources.LoadAll<GameObject>(dirname);
-
+            GameObject[] golist = Resources.LoadAll<GameObject>(dirname);
             PartBoneNamesHolder[] boneHolder = Resources.LoadAll<PartBoneNamesHolder>(dirname);
+
+            if (golist == null || golist.Length == 0 || boneHolder == null || boneHolder.Length == 0)
+            {
+                Debug.LogWarning($"[CreateAllAvatarRes] 跳过 {dirname}，Resources 下未找到所需资源");
+                continue;
+            }
 
             AvatarRes avatarres = new AvatarRes();
             mAvatarResList.Add(avatarres);
@@ -383,11 +402,13 @@ public class Main : MonoBehaviour
             avatarres.mSkeleton = FindRes(golist, Character.SKELETON_NAME)[0];
             avatarres.mBoneHolder = boneHolder[0];
 
-            string meshPath = AvatarRes.MESH_PATH + dirname + "/";
-            List<Mesh> meshArray = FunctionUtil.CollectAll<Mesh>(meshPath);
+            // Mesh / Material / AnimationClip 须放在 Assets/Resources/<dirname>/Meshs|Materials|Anims/ 下
+            // Resources.LoadAll 在所有平台（含 WebGL）均可用
+            string meshResPath = $"{dirname}/{AvatarRes.MESH_SUBPATH}";
+            List<Mesh> meshArray = new List<Mesh>(Resources.LoadAll<Mesh>(meshResPath));
 
-            string matPath = AvatarRes.MAT_PATH + dirname + "/";
-            List<Material> matArray = FunctionUtil.CollectAll<Material>(matPath);
+            string matResPath = $"{dirname}/{AvatarRes.MAT_SUBPATH}";
+            List<Material> matArray = new List<Material>(Resources.LoadAll<Material>(matResPath));
 
             avatarres.partList.Clear();
             for (int i = 0; i < (int)CharacterPartType.TotalNum; i++)
@@ -403,8 +424,8 @@ public class Main : MonoBehaviour
                 avatarres.partList.Add(part);
             }
 
-            string animpath = AvatarRes.ANIM_PATH + dirname + "/";
-            List<AnimationClip> clips = FunctionUtil.CollectAll<AnimationClip>(animpath);
+            string animResPath = $"{dirname}/{AvatarRes.ANIM_SUBPATH}";
+            List<AnimationClip> clips = new List<AnimationClip>(Resources.LoadAll<AnimationClip>(animResPath));
             avatarres.mAnimList.AddRange(clips);
         }
     }

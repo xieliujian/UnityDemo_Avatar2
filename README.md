@@ -185,3 +185,99 @@ half4 CalcDecal(float2 uv)
 }
 
 ```
+
+## WebGL 打包适配
+
+### 问题说明
+
+原始 `CreateAllAvatarRes` 在 WebGL 打包后资源全部加载失败，原因有三：
+
+| 问题 | 原因 |
+|------|------|
+| `DirectoryInfo` / `System.IO` | WebGL 运行在浏览器沙箱，无本地文件系统访问 |
+| `FunctionUtil.CollectAll<T>` | 方法体被 `#if UNITY_EDITOR` 包裹，打包后返回空列表 |
+| Mesh / Material / Anim 不在 Resources 下 | 原路径在 `Assets/Meshs/`、`Assets/Materials/`、`Assets/Anims/`，打包时不会被包含 |
+
+### 代码改动（`Assets/Scripts/Main.cs`）
+
+**1. 移除 `System.IO` 依赖**
+
+```cs
+// 删除
+using System;
+using System.IO;
+```
+
+**2. `AvatarRes` 路径常量改为 Resources 子路径**
+
+```cs
+// 修改前
+public const string MESH_PATH = "Assets/Meshs/";
+public const string ANIM_PATH = "Assets/Anims/";
+public const string Prefab_PATH = "Assets/Resources/";
+public const string MAT_PATH = "Assets/Materials/";
+
+// 修改后
+public const string MESH_SUBPATH = "Meshs";
+public const string ANIM_SUBPATH = "Anims";
+public const string MAT_SUBPATH = "Materials";
+public static readonly string[] CHAR_NAMES = { "Female", "Male" };
+```
+
+**3. `CreateAllAvatarRes` 改用 `Resources.LoadAll`**
+
+```cs
+// 修改前：使用 DirectoryInfo 扫描文件系统 + FunctionUtil.CollectAll（Editor Only）
+void CreateAllAvatarRes()
+{
+    DirectoryInfo dir = new DirectoryInfo(AvatarRes.Prefab_PATH);
+    foreach(var subdir in dir.GetDirectories())
+    {
+        string dirname = subdir.Name;
+        List<Mesh> meshArray = FunctionUtil.CollectAll<Mesh>(AvatarRes.MESH_PATH + dirname + "/");
+        List<Material> matArray = FunctionUtil.CollectAll<Material>(AvatarRes.MAT_PATH + dirname + "/");
+        List<AnimationClip> clips = FunctionUtil.CollectAll<AnimationClip>(AvatarRes.ANIM_PATH + dirname + "/");
+        // ...
+    }
+}
+
+// 修改后：使用静态角色列表 + Resources.LoadAll（全平台可用）
+void CreateAllAvatarRes()
+{
+    foreach (string dirname in AvatarRes.CHAR_NAMES)
+    {
+        List<Mesh> meshArray = new List<Mesh>(Resources.LoadAll<Mesh>($"{dirname}/{AvatarRes.MESH_SUBPATH}"));
+        List<Material> matArray = new List<Material>(Resources.LoadAll<Material>($"{dirname}/{AvatarRes.MAT_SUBPATH}"));
+        List<AnimationClip> clips = new List<AnimationClip>(Resources.LoadAll<AnimationClip>($"{dirname}/{AvatarRes.ANIM_SUBPATH}"));
+        // ...
+    }
+}
+```
+
+### 资源目录迁移（需在 Unity Editor 中操作）
+
+将 Mesh、Material、AnimationClip 移入 `Assets/Resources/` 对应子目录：
+
+```
+迁移前：
+Assets/Meshs/Female/        → Assets/Resources/Female/Meshs/
+Assets/Materials/Female/    → Assets/Resources/Female/Materials/
+Assets/Anims/Female/        → Assets/Resources/Female/Anims/
+Assets/Meshs/Male/          → Assets/Resources/Male/Meshs/
+Assets/Materials/Male/      → Assets/Resources/Male/Materials/
+Assets/Anims/Male/          → Assets/Resources/Male/Anims/
+
+迁移后完整结构：
+Assets/Resources/
+├── Female/
+│   ├── bonenames.asset
+│   ├── female_skeleton.prefab
+│   ├── eyes/face/hair/pants/shoes/top .prefab
+│   ├── Meshs/        ← Mesh 资源
+│   ├── Materials/    ← Material 资源
+│   └── Anims/        ← AnimationClip 资源
+└── Male/
+    └── ...（同上）
+```
+
+> **新增角色时**：在 `AvatarRes.CHAR_NAMES` 数组中追加角色目录名，并按上述结构放置资源即可。

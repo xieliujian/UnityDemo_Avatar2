@@ -25,9 +25,6 @@ public class GenerateResEditor : Editor
             return;
         }
 
-        if (Directory.Exists(AvatarRes.ANIM_PATH))
-            Directory.Delete(AvatarRes.ANIM_PATH, true);
-
         if (Directory.Exists(AvatarRes.Prefab_PATH))
             Directory.Delete(AvatarRes.Prefab_PATH, true);
 
@@ -76,8 +73,8 @@ public class GenerateResEditor : Editor
 
     private static void GenerateSkeleton(GameObject srcobj, string dir, string middir)
     {
-        string prefabpath = AvatarRes.Prefab_PATH + "/" + middir + "/";
-        string animpath = AvatarRes.ANIM_PATH + "/" + middir + "/";
+        string prefabpath = AvatarRes.Prefab_PATH + middir + "/";
+        string animpath = AvatarRes.Prefab_PATH + middir + "/" + AvatarRes.ANIM_SUBPATH + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -130,7 +127,7 @@ public class GenerateResEditor : Editor
 
     private static void GeneratePrefab(GameObject srcobj, string dir, string middir)
     {
-        string prefabpath = AvatarRes.Prefab_PATH + "/" + middir + "/";
+        string prefabpath = AvatarRes.Prefab_PATH + middir + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -273,7 +270,7 @@ public class GenerateResEditor : Editor
 
     static void GenerateMesh(string dir, string middir, string fbxname)
     {
-        string meshPath = AvatarRes.MESH_PATH + "/" + middir + "/";
+        string meshPath = AvatarRes.Prefab_PATH + middir + "/" + AvatarRes.MESH_SUBPATH + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
@@ -327,7 +324,7 @@ public class GenerateResEditor : Editor
     /// <param name="fbxname"></param>
     static void GenerateAnim(string dir, string middir, string fbxname)
     {
-        string clippath = AvatarRes.ANIM_PATH + "/" + middir + "/";
+        string clippath = AvatarRes.Prefab_PATH + middir + "/" + AvatarRes.ANIM_SUBPATH + "/";
 
         DirectoryInfo dirinfo = new DirectoryInfo(dir);
         if (!dirinfo.Exists)
