@@ -22,6 +22,8 @@ public static class FunctionUtil
     public static List<T> CollectAll<T>(string path) where T : UnityEngine.Object
     {
         List<T> l = new List<T>();
+
+#if UNITY_EDITOR
         string[] files = Directory.GetFiles(path);
 
         foreach (string file in files)
@@ -31,6 +33,8 @@ public static class FunctionUtil
             if (asset == null) throw new Exception("Asset is not " + typeof(T) + ": " + file);
             l.Add(asset);
         }
+#endif
+
         return l;
     }
 

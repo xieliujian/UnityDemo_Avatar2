@@ -1,3 +1,6 @@
+
+#if UNITY_EDITOR
+
 using System;
 using UnityEditor;
 using UnityEngine;
@@ -89,3 +92,5 @@ public class FaceShaderGUI : ShaderGUI
         FaceDecal.SetMat(material, matrix);
     }
 }
+
+#endif
